@@ -224,6 +224,7 @@ int main()
                      
                      lastGloveDef = skinManager->Gloves.defIndex;
                      lastGlovePaint = skinManager->Gloves.Paint;
+                     ShouldUpdate = true;
                  }
              }
         }
