@@ -80,7 +80,13 @@ int main()
 
         bool ShouldUpdate = false;
 
-        const std::vector<uintptr_t> weapons = GetWeapons(localPlayer);
+        static int updateCounter = 0;
+        updateCounter++;
+        
+        // Only process weapons every 2 frames (~10ms) to reduce CPU usage
+        if (updateCounter % 2 == 0)
+        {
+            const std::vector<uintptr_t> weapons = GetWeapons(localPlayer);
     /*
     //clean up & hud update
 
@@ -131,11 +137,7 @@ int main()
                 const auto it = KnifeModels.find(skinManager->Knife.defIndex);
                 if (it != KnifeModels.end())
                 {
-                    Sleep(5);
-                    
                     mem.Write<uint16_t>(item + Offsets::m_iItemDefinitionIndex, skinManager->Knife.defIndex);
-                    
-                    Sleep(10);
                 }
             }
 
@@ -228,6 +230,7 @@ int main()
 
         if (ShouldUpdate || ForceUpdate)
             UpdateWeapons(weapons);
+        }
 
         ForceUpdate = false;
         
