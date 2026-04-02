@@ -19,7 +19,7 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: recursive
 
@@ -62,7 +62,7 @@ jobs:
         }
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: CS2-SkinChanger-${{ env.BUILD_PLATFORM }}-${{ env.BUILD_CONFIGURATION }}
         path: build_artifacts/
