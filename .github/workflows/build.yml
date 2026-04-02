@@ -41,22 +41,22 @@ jobs:
 
     - name: Verify build output
       run: |
-        if (!(Test-Path "x64\${{ env.BUILD_CONFIGURATION }}\ext-cs2-skin-changer.exe")) {
+        if (!(Test-Path "src\x64\${{ env.BUILD_CONFIGURATION }}\ext-cs2-skin-changer.exe")) {
           Write-Host "Build failed: executable not found"
           exit 1
         }
         Write-Host "Build successful: executable found"
-        Get-Item "x64\${{ env.BUILD_CONFIGURATION }}\ext-cs2-skin-changer.exe"
+        Get-Item "src\x64\${{ env.BUILD_CONFIGURATION }}\ext-cs2-skin-changer.exe"
 
     - name: Create artifacts directory
       run: mkdir build_artifacts
 
     - name: Copy executable to artifacts
-      run: copy "x64\${{ env.BUILD_CONFIGURATION }}\ext-cs2-skin-changer.exe" "build_artifacts\"
+      run: copy "src\x64\${{ env.BUILD_CONFIGURATION }}\ext-cs2-skin-changer.exe" "build_artifacts\"
 
     - name: Copy dependencies to artifacts
       run: |
-        $dllPath = "x64\${{ env.BUILD_CONFIGURATION }}"
+        $dllPath = "src\x64\${{ env.BUILD_CONFIGURATION }}"
         if (Test-Path $dllPath) {
           copy "$dllPath\*.dll" "build_artifacts\" -ErrorAction SilentlyContinue
         }
