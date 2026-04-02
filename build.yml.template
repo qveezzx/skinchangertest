@@ -1,0 +1,90 @@
+name: Build CS2 Skin Changer
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  release:
+    types: [created]
+
+env:
+  SOLUTION_FILE_PATH: src/ext-cs2-skin-changer.sln
+  BUILD_PLATFORM: x64
+  BUILD_CONFIGURATION: Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+      with:
+        msbuild-version: latest
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.1
+      with:
+        nuget-version: latest
+
+    - name: Restore NuGet packages
+      run: nuget restore "${{ env.SOLUTION_FILE_PATH }}"
+
+    - name: Build solution
+      run: msbuild "${{ env.SOLUTION_FILE_PATH }}" /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} /p:Platform=${{ env.BUILD_PLATFORM }}
+
+    - name: Verify build output
+      run: |
+        if (!(Test-Path "x64\${{ env.BUILD_CONFIGURATION }}\ext-cs2-skin-changer.exe")) {
+          Write-Host "Build failed: executable not found"
+          exit 1
+        }
+        Write-Host "Build successful: executable found"
+        Get-Item "x64\${{ env.BUILD_CONFIGURATION }}\ext-cs2-skin-changer.exe"
+
+    - name: Create artifacts directory
+      run: mkdir build_artifacts
+
+    - name: Copy executable to artifacts
+      run: copy "x64\${{ env.BUILD_CONFIGURATION }}\ext-cs2-skin-changer.exe" "build_artifacts\"
+
+    - name: Copy dependencies to artifacts
+      run: |
+        $dllPath = "x64\${{ env.BUILD_CONFIGURATION }}"
+        if (Test-Path $dllPath) {
+          copy "$dllPath\*.dll" "build_artifacts\" -ErrorAction SilentlyContinue
+        }
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: CS2-SkinChanger-${{ env.BUILD_PLATFORM }}-${{ env.BUILD_CONFIGURATION }}
+        path: build_artifacts/
+        retention-days: 30
+
+    - name: Upload release asset (on release)
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          build_artifacts/ext-cs2-skin-changer.exe
+          build_artifacts/*.dll
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build Info
+      run: |
+        Write-Host "=== Build Information ==="
+        Write-Host "Repository: ${{ github.repository }}"
+        Write-Host "Commit: ${{ github.sha }}"
+        Write-Host "Branch: ${{ github.ref }}"
+        Write-Host "Event: ${{ github.event_name }}"
+        Write-Host "Platform: ${{ env.BUILD_PLATFORM }}"
+        Write-Host "Configuration: ${{ env.BUILD_CONFIGURATION }}"
+        Write-Host "========================"
