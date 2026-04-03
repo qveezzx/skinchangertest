@@ -1,0 +1,22 @@
+{
+  "weapon": {
+    "id": 22,
+    "name": "M4A4",
+    "type": "rifle",
+    "category": "Rifles",
+    "icon": "🔭"
+  },
+  "knife": {
+    "defIndex": 0,
+    "name": "Default Knife"
+  },
+  "gloves": {
+    "defIndex": 0,
+    "name": "No Gloves"
+  },
+  "paintKit": 74,
+  "wear": 0.17,
+  "seed": 0,
+  "isApplied": true,
+  "lastUpdate": "2026-04-03T04:32:11.019Z"
+}

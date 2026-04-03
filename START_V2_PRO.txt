@@ -1,0 +1,134 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                   CS2 SKIN MANAGER v2.0 PROFESSIONAL                      ║
+║                          QUICK START GUIDE                                ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+⚡ 30-SECOND SETUP:
+
+1. Open Command Prompt in this directory
+
+2. Type: node web-server.js
+
+3. Browser opens to http://localhost:3000/index-pro.html
+
+4. Done! ✨
+
+─────────────────────────────────────────────────────────────────────────────
+
+📝 WHAT YOU GET:
+
+✅ Weapon Selection (18+ types)
+✅ Professional Black/White/Gray Design  
+✅ Knife & Glove Selection
+✅ Paint Kit Customization
+✅ Keyboard Shortcuts (Ctrl+S, Ctrl+R)
+✅ Preset Saving
+✅ Real-time Status
+
+─────────────────────────────────────────────────────────────────────────────
+
+🎯 FIRST TIME USERS:
+
+Step 1: Start Server
+   └─ node web-server.js
+
+Step 2: Open Browser  
+   └─ http://localhost:3000/index-pro.html
+
+Step 3: Click "Weapons" Tab
+   └─ Select from grid or dropdown
+
+Step 4: Choose Knife & Gloves
+   └─ Or skip if only weapon skins needed
+
+Step 5: Adjust Paint Kit (Optional)
+   └─ Select wear, seed, paint number
+
+Step 6: Click "APPLY CONFIGURATION"
+   └─ Done! Skins will update in game
+
+─────────────────────────────────────────────────────────────────────────────
+
+⌨️ KEYBOARD SHORTCUTS:
+
+Ctrl + S  →  Apply skin
+Ctrl + R  →  Reset to default
+
+─────────────────────────────────────────────────────────────────────────────
+
+📁 KEY FILES:
+
+index-pro.html      → Professional web UI (use this!)
+web-server.js       → Backend server
+skinconfig.json     → Your configuration (auto-created)
+
+─────────────────────────────────────────────────────────────────────────────
+
+❓ QUESTIONS?
+
+Check these files:
+• README_V2_PROFESSIONAL.md  - Complete overview
+• UPGRADE_v2_PROFESSIONAL.md - What's new
+• VISUAL_GUIDE_v2.txt       - Visual reference
+
+─────────────────────────────────────────────────────────────────────────────
+
+🚀 TROUBLESHOOTING:
+
+Port 3000 already in use?
+   → Kill existing process or change port in web-server.js
+
+Server won't start?
+   → Make sure Node.js is installed (node --version)
+   → Try: npm install
+
+Browser won't open?
+   → Open manually: http://localhost:3000/index-pro.html
+
+Changes not applying?
+   → Check browser console for errors
+   → Verify skinconfig.json is created
+   → Check game process is running
+
+─────────────────────────────────────────────────────────────────────────────
+
+💡 TIPS:
+
+• Use Ctrl+S keyboard shortcut for fastest application
+• Weapon grid for quick selection
+• Dropdown for detailed weapon list  
+• Presets save to browser localStorage
+• Configuration persists in skinconfig.json
+
+─────────────────────────────────────────────────────────────────────────────
+
+🎮 READY? LET'S GO!
+
+>> Open Command Prompt here
+>> Type: node web-server.js
+>> Browser opens automatically
+>> Select your skins
+>> Enjoy! 🎉
+
+─────────────────────────────────────────────────────────────────────────────
+
+Need to integrate into single EXE?
+→ See: C_PLUS_PLUS_INTEGRATION_GUIDE.md
+
+Want to customize colors/design?
+→ Edit: index-pro.html (CSS section)
+
+Want to add more weapons?
+→ Edit: web-server.js (weapons array)
+
+─────────────────────────────────────────────────────────────────────────────
+
+Version: 2.0 Professional Edition
+Status: ✅ Ready to Use
+Quality: Production-Grade
+
+Happy Skinchanging! 🎮✨
+
+═════════════════════════════════════════════════════════════════════════════

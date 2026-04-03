@@ -1,63 +1,56 @@
 @echo off
-REM Git Push Guide for CS2 Skinchanger Knife & Glove Fixes
-REM This script helps push changes to GitHub
+REM CS2 Skin Changer - Web Server Launcher
+REM This script starts the Node.js web interface
+
+:: THIS IS THE FIX: Set the working directory to the script's folder
+cd /d "%~dp0"
+
+setlocal enabledelayedexpansion
 
 echo.
-echo ============================================================
-echo CS2 SKINCHANGER - PUSH TO GITHUB
-echo ============================================================
+echo ╔════════════════════════════════════════════╗
+echo ║    CS2 Skin Changer - Web Server Launcher    ║
+╚════════════════════════════════════════════╝
 echo.
 
-cd /d c:\Users\qveezzx\Documents\Changer
+REM Check if Node.js is installed
+node --version >nul 2>&1
+if errorlevel 1 (
+    echo ❌ ERROR: Node.js is not installed or not in PATH
+    echo.
+    echo Please install Node.js from: https://nodejs.org/
+    echo Then run this script again.
+    echo.
+    pause
+    exit /b 1
+)
 
-echo [1/5] Checking git status...
-git status
+echo ✓ Node.js detected
+node --version
 echo.
 
-echo [2/5] Adding all changes...
-git add -A
-echo. Files staged for commit:
-git diff --cached --name-only
+REM Check if dependencies are installed
+if not exist "node_modules" (
+    echo 📦 Installing dependencies...
+    echo.
+    call npm install express ws cors dotenv
+    if errorlevel 1 (
+        echo ❌ Failed to install dependencies
+        pause
+        exit /b 1
+    )
+    echo ✓ Dependencies installed
+    echo.
+)
+
+REM Start the server
+echo 🚀 Starting CS2 Skin Changer Web Server...
+echo.
+echo 🌐 Server will be available at: http://localhost:3000
+echo.
+echo Press Ctrl+C to stop the server
 echo.
 
-echo [3/5] Creating commit...
-echo. Commit message will be:
-echo "feat: Implement knife and glove model forcing"
-echo "- Add CKnifeManager class for subclass ID mapping"
-echo "- Implement 6-stage model forcing for knives"
-echo "- Prepare 6-stage model forcing for gloves"
-echo "- Add comprehensive documentation and automation tools"
-echo "- Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
-echo.
+node web-server.js
 
-git commit -m "feat: Implement knife and glove model forcing
-
-- Add CKnifeManager class with subclass ID mapping for 20 knife types
-- Implement complete 6-stage knife model forcing in weapon loop
-- Add UpdateSubClass and SetModel function signatures
-- Enhance glove model forcing with proper staging (ready for patch)
-- Add Sleep() synchronization between stages
-- Update mesh masks for both first-person and third-person views
-- Add comprehensive documentation (5 guides + 2 automation scripts)
-- Create automatic patching tool for glove section
-
-Knife Implementation: COMPLETE ✅
-Glove Implementation: READY FOR PATCH ⏳
-
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
-
-echo.
-echo [4/5] Checking remote...
-git remote -v
-echo.
-
-echo [5/5] Ready to push!
-echo.
-echo To push to GitHub, run:
-echo   git push origin main
-echo.
-echo Or use this one-liner:
-echo   git push -u origin main
-echo.
-echo ============================================================
 pause
