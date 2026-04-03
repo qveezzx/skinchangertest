@@ -142,7 +142,6 @@ int main()
 <<<<<<< HEAD
 =======
             // --- KNIFE MODEL CHANGING ---
->>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
             bool isKnife = (weaponDefIndex == WeaponsEnum::CtKnife || weaponDefIndex == WeaponsEnum::Tknife);
             
             if (isKnife && skinManager->Knife.defIndex != 0)
@@ -150,9 +149,6 @@ int main()
                 const auto it = KnifeModels.find(skinManager->Knife.defIndex);
                 if (it != KnifeModels.end())
                 {
-<<<<<<< HEAD
-                    mem.Write<uint16_t>(item + Offsets::m_iItemDefinitionIndex, skinManager->Knife.defIndex);
-=======
                     // Stage 1: Set disallow_soc and restore flags for proper material handling
                     mem.Write<bool>(item + 0x1E9, false);  // m_bDisallowSOCm
                     mem.Write<bool>(item + 0x1B8, true);   // m_bRestoreCustomMaterialAfterPrecache
@@ -198,7 +194,6 @@ int main()
                     }
                     
                     std::cout << "[Knife] Model changed to: " << skinManager->Knife.name << std::endl;
->>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
                 }
             }
 
@@ -285,20 +280,13 @@ int main()
                      
                      lastGloveDef = skinManager->Gloves.defIndex;
                      lastGlovePaint = skinManager->Gloves.Paint;
-<<<<<<< HEAD
                      ShouldUpdate = true;
-=======
->>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
                  }
              }
         }
 
         if (ShouldUpdate || ForceUpdate)
             UpdateWeapons(weapons);
-<<<<<<< HEAD
-        }
-=======
->>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
 
         ForceUpdate = false;
         

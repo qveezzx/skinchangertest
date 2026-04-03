@@ -7,8 +7,6 @@
 namespace Sigs
 {
 	const auto RegenerateWeaponSkins = mem.SigScan(L"client.dll", "48 83 EC ? E8 ? ? ? ? 48 85 C0 0F 84 ? ? ? ? 48 8B 10");
-<<<<<<< HEAD
-=======
 	
 	// Function to update entity subclass and model rendering
 	static uintptr_t GetUpdateSubClassFunc()
@@ -31,5 +29,4 @@ namespace Sigs
 		}
 		return setModelAddr;
 	}
->>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
 }

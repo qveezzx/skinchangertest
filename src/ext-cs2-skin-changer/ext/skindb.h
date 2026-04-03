@@ -70,8 +70,6 @@ std::map<uint16_t, std::string> KnifeNames = {
     {526, "Kukri"}
 };
 
-<<<<<<< HEAD
-=======
 // Knife subclass ID mapping for proper model rendering
 // These IDs correspond to the model/entity classes that handle each knife type
 class CKnifeManager
@@ -104,7 +102,6 @@ public:
 
 static CKnifeManager* knifeManager = new CKnifeManager();
 
->>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
 class Knife_t
 {
 public:
