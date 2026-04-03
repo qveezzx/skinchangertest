@@ -80,17 +80,7 @@ int main()
 
         bool ShouldUpdate = false;
 
-<<<<<<< HEAD
-        static int updateCounter = 0;
-        updateCounter++;
-        
-        // Only process weapons every 2 frames (~10ms) to reduce CPU usage
-        if (updateCounter % 2 == 0)
-        {
-            const std::vector<uintptr_t> weapons = GetWeapons(localPlayer);
-=======
         const std::vector<uintptr_t> weapons = GetWeapons(localPlayer);
->>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
     /*
     //clean up & hud update
 
@@ -127,11 +117,8 @@ int main()
                 continue;
 
             mem.Write<uint32_t>(weapon + Offsets::m_nFallbackPaintKit, skin.Paint);
-<<<<<<< HEAD
-=======
             mem.Write<float>(weapon + Offsets::m_flFallbackWear, 0.01f);
             mem.Write<uint32_t>(weapon + Offsets::m_nFallbackSeed, 0);
->>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
 
             const uint64_t mask = skin.bUsesOldModel + 1;
 
@@ -139,8 +126,6 @@ int main()
             SetMeshMask(weapon, mask);
             SetMeshMask(hudWeapon, mask);
 
-<<<<<<< HEAD
-=======
             // --- KNIFE MODEL CHANGING ---
             bool isKnife = (weaponDefIndex == WeaponsEnum::CtKnife || weaponDefIndex == WeaponsEnum::Tknife);
             
