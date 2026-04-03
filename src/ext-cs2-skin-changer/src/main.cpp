@@ -80,6 +80,7 @@ int main()
 
         bool ShouldUpdate = false;
 
+<<<<<<< HEAD
         static int updateCounter = 0;
         updateCounter++;
         
@@ -87,6 +88,9 @@ int main()
         if (updateCounter % 2 == 0)
         {
             const std::vector<uintptr_t> weapons = GetWeapons(localPlayer);
+=======
+        const std::vector<uintptr_t> weapons = GetWeapons(localPlayer);
+>>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
     /*
     //clean up & hud update
 
@@ -123,6 +127,11 @@ int main()
                 continue;
 
             mem.Write<uint32_t>(weapon + Offsets::m_nFallbackPaintKit, skin.Paint);
+<<<<<<< HEAD
+=======
+            mem.Write<float>(weapon + Offsets::m_flFallbackWear, 0.01f);
+            mem.Write<uint32_t>(weapon + Offsets::m_nFallbackSeed, 0);
+>>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
 
             const uint64_t mask = skin.bUsesOldModel + 1;
 
@@ -130,6 +139,10 @@ int main()
             SetMeshMask(weapon, mask);
             SetMeshMask(hudWeapon, mask);
 
+<<<<<<< HEAD
+=======
+            // --- KNIFE MODEL CHANGING ---
+>>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
             bool isKnife = (weaponDefIndex == WeaponsEnum::CtKnife || weaponDefIndex == WeaponsEnum::Tknife);
             
             if (isKnife && skinManager->Knife.defIndex != 0)
@@ -137,7 +150,55 @@ int main()
                 const auto it = KnifeModels.find(skinManager->Knife.defIndex);
                 if (it != KnifeModels.end())
                 {
+<<<<<<< HEAD
                     mem.Write<uint16_t>(item + Offsets::m_iItemDefinitionIndex, skinManager->Knife.defIndex);
+=======
+                    // Stage 1: Set disallow_soc and restore flags for proper material handling
+                    mem.Write<bool>(item + 0x1E9, false);  // m_bDisallowSOCm
+                    mem.Write<bool>(item + 0x1B8, true);   // m_bRestoreCustomMaterialAfterPrecache
+                    
+                    // Stage 2: Apply knife definition index
+                    mem.Write<uint16_t>(item + Offsets::m_iItemDefinitionIndex, skinManager->Knife.defIndex);
+                    
+                    Sleep(5);
+                    
+                    // Stage 3: Update subclass ID for proper model rendering
+                    auto knifeIt = knifeManager->m_subclassIdMap.find(skinManager->Knife.defIndex);
+                    if (knifeIt != knifeManager->m_subclassIdMap.end())
+                    {
+                        mem.Write<uint64_t>(weapon + Offsets::m_nSubclassID, knifeIt->second);
+                    }
+                    
+                    Sleep(5);
+                    
+                    // Stage 4: Call UpdateSubClass to refresh entity rendering
+                    uintptr_t updateSubClassAddr = Sigs::GetUpdateSubClassFunc();
+                    if (updateSubClassAddr)
+                    {
+                        mem.CallThread(updateSubClassAddr, reinterpret_cast<LPVOID>(weapon));
+                        Sleep(50);
+                    }
+                    
+                    // Stage 5: Update mesh masks for weapon and HUD version
+                    const uintptr_t weaponNode = mem.Read<uintptr_t>(weapon + Offsets::m_pGameSceneNode);
+                    if (weaponNode)
+                    {
+                        const auto weaponModel = weaponNode + Offsets::m_modelState;
+                        mem.Write<uint64_t>(weaponModel + Offsets::m_MeshGroupMask, 1);
+                    }
+                    
+                    if (hudWeapon)
+                    {
+                        const uintptr_t hudNode = mem.Read<uintptr_t>(hudWeapon + Offsets::m_pGameSceneNode);
+                        if (hudNode)
+                        {
+                            const uintptr_t viewModel = hudNode + Offsets::m_modelState;
+                            mem.Write<uint64_t>(viewModel + Offsets::m_MeshGroupMask, 1);
+                        }
+                    }
+                    
+                    std::cout << "[Knife] Model changed to: " << skinManager->Knife.name << std::endl;
+>>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
                 }
             }
 
@@ -224,14 +285,20 @@ int main()
                      
                      lastGloveDef = skinManager->Gloves.defIndex;
                      lastGlovePaint = skinManager->Gloves.Paint;
+<<<<<<< HEAD
                      ShouldUpdate = true;
+=======
+>>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
                  }
              }
         }
 
         if (ShouldUpdate || ForceUpdate)
             UpdateWeapons(weapons);
+<<<<<<< HEAD
         }
+=======
+>>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
 
         ForceUpdate = false;
         

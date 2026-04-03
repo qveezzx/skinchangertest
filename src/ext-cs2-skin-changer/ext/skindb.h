@@ -70,6 +70,41 @@ std::map<uint16_t, std::string> KnifeNames = {
     {526, "Kukri"}
 };
 
+<<<<<<< HEAD
+=======
+// Knife subclass ID mapping for proper model rendering
+// These IDs correspond to the model/entity classes that handle each knife type
+class CKnifeManager
+{
+public:
+    // Map knife defIndex to their subclass ID for proper model rendering
+    std::unordered_map<uint16_t, uint64_t> m_subclassIdMap = {
+        {500, 0x0A},  // Bayonet
+        {503, 0x0B},  // Classic
+        {505, 0x0C},  // Flip
+        {506, 0x0D},  // Gut
+        {507, 0x0E},  // Karambit
+        {508, 0x0F},  // M9 Bayonet
+        {509, 0x10},  // Huntsman
+        {512, 0x11},  // Falchion
+        {514, 0x12},  // Bowie
+        {515, 0x13},  // Butterfly
+        {516, 0x14},  // Daggers
+        {517, 0x15},  // Paracord
+        {518, 0x16},  // Survival
+        {519, 0x17},  // Ursus
+        {520, 0x18},  // Navaja
+        {521, 0x19},  // Nomad
+        {522, 0x1A},  // Stiletto
+        {523, 0x1B},  // Talon
+        {525, 0x1C},  // Skeleton
+        {526, 0x1D}   // Kukri
+    };
+};
+
+static CKnifeManager* knifeManager = new CKnifeManager();
+
+>>>>>>> 65bda63 (feat: Implement knife and glove model forcing - Complete knife implementation + glove ready for patch + comprehensive docs - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>)
 class Knife_t
 {
 public:
