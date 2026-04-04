@@ -34,8 +34,6 @@ private:
 
         // Get weapons container from player
         auto weaponServices = playerPawn.weaponServices();
-        if (!weaponServices)
-            return;
 
         // Get all weapons and iterate
         auto weapons = weaponServices.weapons();
