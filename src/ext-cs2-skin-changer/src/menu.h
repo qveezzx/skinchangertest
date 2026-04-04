@@ -203,41 +203,10 @@ void RenderBetaWarning(float x, float y, float w, float h)
 
 void RenderWeaponTab(float x, float y, float w, float h)
 {
-    // Search Box area with better styling
-    float searchY = y + 15;
-    float searchBoxW = 280.0f;
-    float searchBoxH = 40.0f;
-    float searchX = x + 20;
+    // Search Box - simple version
+    SC_GUI::TextInput("search_wep", searchBuffer, 128, x + 20, y + 20, 300, 35, "Search Skins...");
     
-    // Search bar background
-    SC_GUI::DrawRoundedRect(searchX, searchY, searchBoxW, searchBoxH, 6.0f, Color(35, 35, 45, 255));
-    SC_GUI::DrawStrokeRoundedRect(searchX, searchY, searchBoxW, searchBoxH, 6.0f, Color(100, 100, 120, 200), 1.5f);
-    
-    // Search input field
-    SC_GUI::TextInput("search_wep", searchBuffer, 128, searchX + 8, searchY + 7, searchBoxW - 16, searchBoxH - 14, "Search Skins...");
-    
-    // Utility buttons
-    float buttonW = 45.0f;
-    float buttonH = 40.0f;
-    float buttonY = searchY;
-    float buttonX1 = searchX + searchBoxW + 12;
-    float buttonX2 = buttonX1 + buttonW + 8;
-    float buttonX3 = buttonX2 + buttonW + 8;
-    
-    // Clear button
-    if (SC_GUI::Button("btn_clear", "Clear", buttonX1, buttonY, buttonW, buttonH)) {
-        memset(searchBuffer, 0, sizeof(searchBuffer));
-    }
-    
-    // Sort button (placeholder for future sorting)
-    if (SC_GUI::Button("btn_sort", "Sort", buttonX2, buttonY, buttonW, buttonH)) {
-        // Future: toggle sort options
-    }
-    
-    // Filter button (placeholder for future filtering)
-    if (SC_GUI::Button("btn_filter", "Filter", buttonX3, buttonY, buttonW, buttonH)) {
-        // Future: show filter menu
-    }
+    // Scroll State
     static float scrollY = 0.0f;
     float contentHeight = 0.0f;
 
