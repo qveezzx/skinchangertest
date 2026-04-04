@@ -68,15 +68,22 @@ int main()
     {
         Sleep(5);
 
+        // Call OnFrame first for overlay rendering (handles waiting state)
+        OnFrame();
+
+        // Only access game memory if CS2 is running
         const uintptr_t localController = GetLocalController();
+        if (!localController) continue;  // CS2 not running, skip game memory access
+        
         const uintptr_t inventoryServices = mem.Read<uintptr_t>(localController + Offsets::m_pInventoryServices);
         const uintptr_t localPlayer = GetLocalPlayer();
+        if (!localPlayer) continue;  // No local player yet
+        
         const uintptr_t pWeaponServices = mem.Read<uintptr_t>(localPlayer + Offsets::m_pWeaponServices);
 
         mem.Write<uint16_t>(inventoryServices + Offsets::m_unMusicID, skinManager->MusicKit.id);
 
         UpdateActiveMenuDef(localPlayer);
-        OnFrame();
 
         bool ShouldUpdate = false;
 

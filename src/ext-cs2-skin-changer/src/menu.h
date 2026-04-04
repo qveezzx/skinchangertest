@@ -751,6 +751,17 @@ void RenderMenu()
     }
 }
 
+// Wrapper functions for overlay rendering callbacks
+void RenderWaitingScreenCallback()
+{
+    RenderWaitingScreen(0.0f, 0.0f, static_cast<float>(overlay::G_Width), static_cast<float>(overlay::G_Height));
+}
+
+void RenderLoadingScreenCallback()
+{
+    RenderLoadingScreen(0.0f, 0.0f, static_cast<float>(overlay::G_Width), static_cast<float>(overlay::G_Height));
+}
+
 void OnFrame()
 {
     // Check CS2 status
@@ -777,19 +788,13 @@ void OnFrame()
         }
     }
     
-    float x = 0.0f, y = 0.0f;
-    float w = static_cast<float>(overlay::G_Width);
-    float h = static_cast<float>(overlay::G_Height);
-    
     // Render based on state
     if (currentAppState == AppState::WAITING_FOR_CS2) {
-        RenderWaitingScreen(x, y, w, h);
-        overlay::Render(nullptr, true);
+        overlay::Render(RenderWaitingScreenCallback, true);
         return;
     }
     else if (currentAppState == AppState::LOADING) {
-        RenderLoadingScreen(x, y, w, h);
-        overlay::Render(nullptr, true);
+        overlay::Render(RenderLoadingScreenCallback, true);
         return;
     }
     
