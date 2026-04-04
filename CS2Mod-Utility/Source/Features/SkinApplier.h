@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Features/SkinManager.h>
 #include <Features/SkinChangerConfigVariables.h>
 #include <HookContext/HookContextMacros.h>
 #include <CS2/Classes/Entities/C_BaseEntity.h>

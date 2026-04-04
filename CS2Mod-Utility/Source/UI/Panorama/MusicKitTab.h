@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Features/SkinManager.h>
 #include <Features/MusicKits.h>
 #include <Features/SkinChangerConfigVariables.h>
 #include <GameClient/Panorama/PanoramaDropDown.h>

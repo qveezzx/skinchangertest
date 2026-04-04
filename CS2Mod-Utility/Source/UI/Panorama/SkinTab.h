@@ -1,8 +1,6 @@
 #pragma once
 
-#include <Features/SkinManager.h>
 #include <Features/SkinChangerConfigVariables.h>
-#include <Features/SkinDatabase.h>
 #include <GameClient/Panorama/PanoramaDropDown.h>
 #include <EntryPoints/GuiEntryPoints.h>
 #include <HookContext/HookContextMacros.h>
