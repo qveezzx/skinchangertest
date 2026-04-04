@@ -749,12 +749,12 @@ void RenderMenu()
     // Logo area
     float logoSize = 42.0f;
     SC_GUI::DrawRoundedRect(x + 24, y + 24, logoSize, logoSize, 10.0f, SC_GUI::currentTheme.accent);
-    SC_GUI::DrawStringA("B", x + 24 + logoSize/2, y + 24 + logoSize/2, Color(255,255,255,255), SC_GUI::titleFont, true);
-    SC_GUI::DrawStringA("ERSERK", x + 24 + logoSize + 2, y + 26, SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
+    SC_GUI::DrawStringA("R", x + 24 + logoSize/2, y + 24 + logoSize/2, Color(255,255,255,255), SC_GUI::titleFont, true);
+    SC_GUI::DrawStringA("ETARD", x + 24 + logoSize + 2, y + 26, SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
 
     // Top icon tabs row
     float navY = y + 88;
-    float buttonSize = 52;
+    float buttonSize = 36;
     float buttonGap = 10;
     float buttonsTotal = buttonSize * 5 + buttonGap * 4;
     float startX = x + 20 + (w - 40 - buttonsTotal) / 2;
@@ -766,7 +766,7 @@ void RenderMenu()
     if (SC_GUI::TabButton("tab_settings", "", startX + (buttonSize + buttonGap) * 4, navY, buttonSize, buttonSize, active_tab == 3, "settings")) active_tab = 3;
 
     // Single separator line under header
-    SC_GUI::DrawRect(x + 10, y + 10 + headerH, w - 20, 1, Color(255, 70, 70, 70));
+    SC_GUI::DrawRect(x + 10, y + 10 + headerH + 20, w - 20, 1, Color(255, 70, 70, 70));
 
     // Content Area
     float cX = x + 20;
