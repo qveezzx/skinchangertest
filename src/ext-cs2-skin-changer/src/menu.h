@@ -103,6 +103,10 @@ void RenderWeaponTab(float x, float y, float w, float h)
         bool selected = (selectedSkinIndex == idx);
         
         if (SC_GUI::SkinCard("wskin_" + availableSkins[idx].name, availableSkins[idx].name, availableSkins[idx].image_url, availableSkins[idx].rarity, cX, cY, itemW, itemH, selected, configManager->diskCacheEnabled)) {
+            // Start loading state
+            isChangingSkin = true;
+            skinChangeStartTime = GetTickCount64();
+            
             if (idx != 0) skinManager->AddSkin(availableSkins[idx]);
             else {
                 skinManager->AddSkin(availableSkins[idx]); 
@@ -221,6 +225,10 @@ void RenderKnifeTab(float x, float y, float w, float h)
          if (SC_GUI::SkinCard("kskin_" + filteredSkins[i].name, filteredSkins[i].name, filteredSkins[i].image_url, filteredSkins[i].rarity, cX, cY, itemW, itemH, selected, configManager->diskCacheEnabled)) {
              selectedKnifeSkinIndex = i;
              if (i!=0) {
+                 // Start loading state
+                 isChangingSkin = true;
+                 skinChangeStartTime = GetTickCount64();
+                 
                  SkinInfo_t s = filteredSkins[i];
                  s.weaponType = WeaponsEnum::CtKnife; skinManager->AddSkin(s);
                  s.weaponType = WeaponsEnum::Tknife; skinManager->AddSkin(s);
@@ -523,11 +531,28 @@ static int active_tab = 0;
 bool MenuOpen = true;
 bool CS2Connected = false;
 
-// Loading/Waiting Screen for CS2
-void RenderLoadingScreen()
+// === STATE MANAGEMENT ===
+enum LoadingPhase {
+    PHASE_WAITING_CS2,      // Waiting for CS2 to launch (static)
+    PHASE_INDEXING_SKINS,   // CS2 detected, indexing skins (5 second loading)
+    PHASE_MAIN_MENU         // Main menu ready
+};
+
+static LoadingPhase currentPhase = PHASE_WAITING_CS2;
+static ULONGLONG indexingStartTime = 0;
+static const ULONGLONG INDEXING_DURATION = 5000; // 5 seconds
+
+// Skin change loading state
+static bool isChangingSkin = false;
+static ULONGLONG skinChangeStartTime = 0;
+
+// === LOADING SCREENS ===
+
+// Static waiting for CS2 screen (no animation)
+void RenderWaitingForCS2Screen()
 {
-    float w = 500;
-    float h = 300;
+    float w = 520;
+    float h = 320;
     
     float x = (overlay::G_Width - w) / 2;
     float y = (overlay::G_Height - h) / 2;
@@ -538,38 +563,68 @@ void RenderLoadingScreen()
     // Border
     SC_GUI::DrawStrokeRoundedRect(x, y, w, h, 12, SC_GUI::currentTheme.border, 2.0f);
 
-    // Title
-    SC_GUI::DrawStringA("CS2 Skin Changer", x + w/2, y + 40, SC_GUI::currentTheme.text, SC_GUI::titleFont, true);
+    // Logo/Title
+    SC_GUI::DrawStringA("CS2 Skin Changer", x + w/2, y + 50, SC_GUI::currentTheme.text, SC_GUI::titleFont, true);
 
     // Main message
-    SC_GUI::DrawStringA("Waiting for CS2 to launch...", x + w/2, y + 100, SC_GUI::currentTheme.textDim, SC_GUI::mainFont, true);
+    SC_GUI::DrawStringA("Waiting for CS2...", x + w/2, y + 120, SC_GUI::currentTheme.textDim, SC_GUI::mainFont, true);
+
+    // Status indicators (static dots)
+    SC_GUI::DrawStringA("●  ○  ○", x + w/2, y + 170, SC_GUI::currentTheme.accent, SC_GUI::mainFont, true);
+
+    // Status text
+    SC_GUI::DrawStringA("Detecting Counter-Strike 2 Instance", x + w/2, y + 230, SC_GUI::currentTheme.textDim, SC_GUI::smallFont, true);
+
+    // Tip text
+    SC_GUI::DrawStringA("Make sure Counter-Strike 2 is running", x + w/2, y + 280, Color(255, 100, 100, 100), SC_GUI::smallFont, true);
+}
+
+// Animated indexing skins screen (5 second loading)
+void RenderIndexingSkinsScreen()
+{
+    float w = 520;
+    float h = 320;
+    
+    float x = (overlay::G_Width - w) / 2;
+    float y = (overlay::G_Height - h) / 2;
+
+    // Main Background
+    SC_GUI::DrawRoundedRect(x, y, w, h, 12, SC_GUI::currentTheme.mainBg);
+    
+    // Border with accent
+    SC_GUI::DrawStrokeRoundedRect(x, y, w, h, 12, SC_GUI::currentTheme.accent, 2.0f);
+
+    // Logo/Title
+    SC_GUI::DrawStringA("CS2 Skin Changer", x + w/2, y + 50, SC_GUI::currentTheme.accent, SC_GUI::titleFont, true);
+
+    // Main message
+    SC_GUI::DrawStringA("Indexing Skins...", x + w/2, y + 120, SC_GUI::currentTheme.text, SC_GUI::mainFont, true);
 
     // Animated Progress Bar
     float barW = 300;
     float barH = 12;
     float barX = x + (w - barW) / 2;
-    float barY = y + 160;
+    float barY = y + 170;
 
     // Background of bar
     SC_GUI::DrawRoundedRect(barX, barY, barW, barH, 6, SC_GUI::currentTheme.contentBg);
 
-    // Animated progress (infinite loop)
-    static float animProgress = 0.0f;
-    animProgress += 0.02f;
-    if (animProgress > 1.0f) animProgress = 0.0f;
+    // Animated progress based on elapsed time
+    ULONGLONG elapsed = GetTickCount64() - indexingStartTime;
+    float progress = fmin(1.0f, (float)elapsed / INDEXING_DURATION);
 
-    // Progress fill with smooth animation
-    float fillW = barW * animProgress;
+    // Progress fill
+    float fillW = barW * progress;
     SC_GUI::DrawRoundedRect(barX, barY, fillW, barH, 6, SC_GUI::currentTheme.accent);
 
-    // Secondary accent line for visual effect
-    float secondaryPos = fmod(animProgress + 0.3f, 1.0f);
-    float secondaryW = barW * 0.15f;
-    float secondaryX = barX + (barW - secondaryW) * secondaryPos;
-    Color accentDim = Color(255, 100, 100, 200); // Slightly dimmer accent
-    SC_GUI::DrawRoundedRect(secondaryX, barY, secondaryW, barH, 6, accentDim);
+    // Shimmer effect
+    float shimmerPos = fmod((float)elapsed / 500.0f, 1.0f);
+    float shimmerW = barW * 0.15f;
+    float shimmerX = barX + (barW - shimmerW) * shimmerPos;
+    Color shimmerColor = Color(255, 150, 150, 200);
+    SC_GUI::DrawRoundedRect(shimmerX, barY, shimmerW, barH, 6, shimmerColor);
 
-    // Loading dots animation
+    // Animating dots
     static float dotAnim = 0.0f;
     dotAnim += 0.04f;
     if (dotAnim > 3.0f) dotAnim = 0.0f;
@@ -579,10 +634,74 @@ void RenderLoadingScreen()
     else if (dotAnim < 2.0f) dots = "..";
     else dots = "...";
 
-    SC_GUI::DrawStringA("Loading" + dots, x + w/2, y + 220, SC_GUI::currentTheme.accent, SC_GUI::mainFont, true);
+    SC_GUI::DrawStringA(dots, x + w/2 + 130, y + 120, SC_GUI::currentTheme.accent, SC_GUI::mainFont, true);
 
-    // Additional status info
-    SC_GUI::DrawStringA("Make sure Counter-Strike 2 is running", x + w/2, y + 260, Color(255, 100, 100, 100), SC_GUI::smallFont, true);
+    // Status text with countdown
+    int remainingSecs = (int)((INDEXING_DURATION - elapsed) / 1000);
+    if (remainingSecs < 0) remainingSecs = 0;
+    
+    std::string statusText = "Preparing weapon database (" + std::to_string(remainingSecs) + "s)";
+    SC_GUI::DrawStringA(statusText, x + w/2, y + 230, SC_GUI::currentTheme.textDim, SC_GUI::smallFont, true);
+
+    // Check if indexing is complete
+    if (elapsed >= INDEXING_DURATION) {
+        currentPhase = PHASE_MAIN_MENU;
+    }
+}
+
+// Loading messagebox for skin changes (overlay on main menu)
+void RenderSkinChangeLoadingBox()
+{
+    if (!isChangingSkin) return;
+
+    float w = 280;
+    float h = 160;
+    
+    float x = (overlay::G_Width - w) / 2;
+    float y = (overlay::G_Height - h) / 2;
+
+    // Backdrop (semi-transparent overlay)
+    SC_GUI::DrawRect(0, 0, overlay::G_Width, overlay::G_Height, Color(255, 0, 0, 100));
+
+    // Message box Background
+    SC_GUI::DrawRoundedRect(x, y, w, h, 12, SC_GUI::currentTheme.mainBg);
+    
+    // Border with accent
+    SC_GUI::DrawStrokeRoundedRect(x, y, w, h, 12, SC_GUI::currentTheme.accent, 2.5f);
+
+    // Message text
+    SC_GUI::DrawStringA("Applying Skin", x + w/2, y + 35, SC_GUI::currentTheme.text, SC_GUI::mainFont, true);
+
+    // Animated dots
+    static float dotAnim = 0.0f;
+    dotAnim += 0.05f;
+    if (dotAnim > 3.0f) dotAnim = 0.0f;
+
+    std::string dots = "";
+    if (dotAnim < 1.0f) dots = ".";
+    else if (dotAnim < 2.0f) dots = "..";
+    else dots = "...";
+
+    SC_GUI::DrawStringA("Changing" + dots, x + w/2, y + 80, SC_GUI::currentTheme.accent, SC_GUI::mainFont, true);
+
+    // Animated pulsing dots indicator
+    std::string pulsingDots = "";
+    float phase = fmod(dotAnim, 3.0f);
+    if (phase < 1.0f) pulsingDots = "●  ○  ○";
+    else if (phase < 2.0f) pulsingDots = "○  ●  ○";
+    else pulsingDots = "○  ○  ●";
+    
+    SC_GUI::DrawStringA(pulsingDots, x + w/2, y + 120, SC_GUI::currentTheme.accent, SC_GUI::mainFont, true);
+}
+
+// Main loading screen handler
+void RenderLoadingScreen()
+{
+    if (currentPhase == PHASE_WAITING_CS2) {
+        RenderWaitingForCS2Screen();
+    } else if (currentPhase == PHASE_INDEXING_SKINS) {
+        RenderIndexingSkinsScreen();
+    }
 }
 
 void RenderMenu()
@@ -674,20 +793,40 @@ void RenderMenu()
 
 void OnFrame()
 {
-     // Toggle Logic
-    static bool prevInsert = false;
-    bool insert = (GetAsyncKeyState(VK_INSERT) & 0x8000) != 0;
-    if (insert && !prevInsert) {
-        MenuOpen = !MenuOpen;
-        overlay::SetInput(MenuOpen);
+    // Handle skin change loading timeout (2 seconds)
+    if (isChangingSkin) {
+        ULONGLONG elapsed = GetTickCount64() - skinChangeStartTime;
+        if (elapsed > 2000) {  // 2 second timeout
+            isChangingSkin = false;
+        }
     }
-    prevInsert = insert;
 
-    // Check if CS2 is connected and show appropriate screen
-    if (CS2Connected) {
-        overlay::Render(RenderMenu, MenuOpen);
-    } else {
+    // Disable input when changing skin
+    bool inputEnabled = !isChangingSkin;
+
+    // Toggle Logic (only if not changing skin)
+    if (inputEnabled) {
+        static bool prevInsert = false;
+        bool insert = (GetAsyncKeyState(VK_INSERT) & 0x8000) != 0;
+        if (insert && !prevInsert) {
+            MenuOpen = !MenuOpen;
+            overlay::SetInput(MenuOpen);
+        }
+        prevInsert = insert;
+    }
+
+    // Check current phase
+    if (currentPhase == PHASE_WAITING_CS2 || currentPhase == PHASE_INDEXING_SKINS) {
+        // Show loading screens
         overlay::Render(RenderLoadingScreen, true);
+    } else {
+        // Phase is PHASE_MAIN_MENU - show main menu
+        overlay::Render(RenderMenu, MenuOpen);
+        
+        // Render skin change loading box on top if needed
+        if (isChangingSkin) {
+            overlay::Render(RenderSkinChangeLoadingBox, true);
+        }
     }
 }
 

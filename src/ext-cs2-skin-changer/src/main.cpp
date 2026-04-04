@@ -59,14 +59,14 @@ int main()
     
     std::cout << "SkinChanger Initializing...\n";
 
-    // === WAITING FOR CS2 PHASE ===
+    // === PHASE 1: WAITING FOR CS2 ===
     // Keep showing loading screen until CS2 is found
     bool cs2Found = mem.IsConnected();
     while (!cs2Found && !overlay::ShouldQuit)
     {
         Sleep(500); // Check every 500ms
         
-        // Render loading screen
+        // Render loading screen with phase
         OnFrame();
         
         // Try to connect to CS2
@@ -79,14 +79,15 @@ int main()
         }
     }
 
-    // === CS2 FOUND - Initialize skinchanger data ===
+    // === PHASE 2: CS2 FOUND - INDEXING SKINS (5 second loading) ===
     if (!overlay::ShouldQuit) {
-        std::cout << "CS2 Found! Initializing skin changer...\n";
+        std::cout << "CS2 Found! Indexing skins...\n";
         
-        // Set CS2 connected flag to show main menu instead of loading screen
-        CS2Connected = true;
+        // Move to indexing phase
+        currentPhase = PHASE_INDEXING_SKINS;
+        indexingStartTime = GetTickCount64();
         
-        // Now initialize the skin changer data
+        // Initialize the skin changer data during this phase (while loading screen is showing)
         mem.Write<uint16_t>(Sigs::RegenerateWeaponSkins + 0x52, Offsets::m_AttributeManager + Offsets::m_Item + Offsets::m_AttributeList + Offsets::m_Attributes);
 
         skindb->Dump();
@@ -94,10 +95,18 @@ int main()
         
         configManager->AutoLoad();
 
-        std::cout << "SkinChanger Started\n";
+        std::cout << "Skin database loaded, waiting for indexing to complete...\n";
+        
+        // Wait for indexing phase to complete (5 seconds)
+        while (currentPhase == PHASE_INDEXING_SKINS && !overlay::ShouldQuit)
+        {
+            Sleep(100);
+            OnFrame();
+        }
     }
 
-    // === MAIN SKINCHANGER LOOP ===
+    // === PHASE 3: MAIN SKINCHANGER LOOP ===
+    std::cout << "SkinChanger Started\n";
     while (!overlay::ShouldQuit && mem.IsConnected())
     {
         Sleep(5);
