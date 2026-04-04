@@ -68,34 +68,25 @@ int main()
     {
         Sleep(5);
 
-        // Only access game memory if CS2 is running
         const uintptr_t localController = GetLocalController();
-        if (!localController) {
-            // CS2 not running - still render the waiting screen
-            OnFrame();
-            continue;
-        }
-        
         const uintptr_t inventoryServices = mem.Read<uintptr_t>(localController + Offsets::m_pInventoryServices);
         const uintptr_t localPlayer = GetLocalPlayer();
-        if (!localPlayer) {
-            // No local player yet - still render
-            OnFrame();
-            continue;
-        }
-        
         const uintptr_t pWeaponServices = mem.Read<uintptr_t>(localPlayer + Offsets::m_pWeaponServices);
 
         mem.Write<uint16_t>(inventoryServices + Offsets::m_unMusicID, skinManager->MusicKit.id);
 
         UpdateActiveMenuDef(localPlayer);
-
-        // Call OnFrame for menu rendering (after game checks)
         OnFrame();
 
         bool ShouldUpdate = false;
 
-        const std::vector<uintptr_t> weapons = GetWeapons(localPlayer);
+        static int updateCounter = 0;
+        updateCounter++;
+        
+        // Only process weapons every 2 frames (~10ms) to reduce CPU usage
+        if (updateCounter % 2 == 0)
+        {
+            const std::vector<uintptr_t> weapons = GetWeapons(localPlayer);
     /*
     //clean up & hud update
 
@@ -132,8 +123,6 @@ int main()
                 continue;
 
             mem.Write<uint32_t>(weapon + Offsets::m_nFallbackPaintKit, skin.Paint);
-            mem.Write<float>(weapon + Offsets::m_flFallbackWear, 0.01f);
-            mem.Write<uint32_t>(weapon + Offsets::m_nFallbackSeed, 0);
 
             const uint64_t mask = skin.bUsesOldModel + 1;
 
@@ -141,134 +130,14 @@ int main()
             SetMeshMask(weapon, mask);
             SetMeshMask(hudWeapon, mask);
 
-            // --- KNIFE MODEL CHANGING (ENHANCED EXTERNAL FORCING) ---
             bool isKnife = (weaponDefIndex == WeaponsEnum::CtKnife || weaponDefIndex == WeaponsEnum::Tknife);
             
             if (isKnife && skinManager->Knife.defIndex != 0)
             {
-                static uint16_t lastKnifeDefIndex = 0;
-                
-                uint16_t currentDefIndex = mem.Read<uint16_t>(item + Offsets::m_iItemDefinitionIndex);
-                
-                // Check if knife changed
-                bool knifeChanged = (skinManager->Knife.defIndex != lastKnifeDefIndex);
-                 
-                if (knifeChanged)
+                const auto it = KnifeModels.find(skinManager->Knife.defIndex);
+                if (it != KnifeModels.end())
                 {
-                    lastKnifeDefIndex = skinManager->Knife.defIndex;
-                    
-                    std::cout << "[Knife] Initiating model force change to: " << skinManager->Knife.name << " (ID: " << skinManager->Knife.defIndex << ")" << std::endl;
-                    
-                    // === STAGE 1: PREPARE ITEM STATE ===
-                    mem.Write<bool>(item + 0x1E9, false);  // m_bDisallowSOCm
-                    mem.Write<bool>(item + 0x1B8, true);   // m_bRestoreCustomMaterialAfterPrecache
-                    mem.Write<bool>(item + 0x1B9, false);  // m_bInitialized - force re-initialization
-                    
-                    Sleep(15);
-                    
-                    // === STAGE 2: FORCE ITEM ID INVALIDATION ===
-                    // This forces game to treat it as a new item
-                    mem.Write<uint32_t>(item + Offsets::m_iItemIDHigh, -1);
-                    
-                    Sleep(25);
-                    
-                    // === STAGE 3: APPLY NEW KNIFE DEFINITION ===
-                    const auto it = KnifeModels.find(skinManager->Knife.defIndex);
-                    if (it != KnifeModels.end())
-                    {
-                        // Write definition index
-                        mem.Write<uint16_t>(item + Offsets::m_iItemDefinitionIndex, skinManager->Knife.defIndex);
-                        
-                        std::cout << "[Knife] DefIndex written: " << skinManager->Knife.defIndex << std::endl;
-                        
-                        Sleep(30);
-                        
-                        // === STAGE 4: UPDATE SUBCLASS ID (MODEL ASSOCIATION) ===
-                        auto knifeIt = knifeManager->m_subclassIdMap.find(skinManager->Knife.defIndex);
-                        if (knifeIt != knifeManager->m_subclassIdMap.end())
-                        {
-                            mem.Write<uint64_t>(weapon + Offsets::m_nSubclassID, knifeIt->second);
-                            std::cout << "[Knife] SubclassID written: 0x" << std::hex << knifeIt->second << std::dec << std::endl;
-                        }
-                        
-                        Sleep(20);
-                        
-                        // === STAGE 5: CALL UPDATE SUBCLASS FUNCTION ===
-                        uintptr_t updateSubClassAddr = Sigs::GetUpdateSubClassFunc();
-                        if (updateSubClassAddr)
-                        {
-                            mem.CallThread(updateSubClassAddr, reinterpret_cast<LPVOID>(weapon));
-                            std::cout << "[Knife] UpdateSubClass called" << std::endl;
-                            Sleep(75);
-                        }
-                        
-                        // === STAGE 6: FORCE WEAPON REGENERATION ===
-                        // This is critical for external forcing to work
-                        mem.CallThread(Sigs::RegenerateWeaponSkins);
-                        std::cout << "[Knife] RegenerateWeaponSkins called" << std::endl;
-                        Sleep(100);
-                        
-                        // === STAGE 7: UPDATE MESH MASKS (FORCE MODEL RENDERING) ===
-                        const uintptr_t weaponNode = mem.Read<uintptr_t>(weapon + Offsets::m_pGameSceneNode);
-                        if (weaponNode)
-                        {
-                            const auto weaponModel = weaponNode + Offsets::m_modelState;
-                            
-                            // Force mesh mask update multiple times
-                            for (int i = 0; i < 5; i++)
-                            {
-                                mem.Write<uint64_t>(weaponModel + Offsets::m_MeshGroupMask, 1);
-                                Sleep(10);
-                            }
-                            
-                            std::cout << "[Knife] Weapon mesh mask updated" << std::endl;
-                        }
-                        
-                        // === STAGE 8: UPDATE HUD KNIFE MODEL ===
-                        if (hudWeapon)
-                        {
-                            const uintptr_t hudNode = mem.Read<uintptr_t>(hudWeapon + Offsets::m_pGameSceneNode);
-                            if (hudNode)
-                            {
-                                const uintptr_t viewModel = hudNode + Offsets::m_modelState;
-                                
-                                // Force HUD mesh mask update multiple times
-                                for (int i = 0; i < 5; i++)
-                                {
-                                    mem.Write<uint64_t>(viewModel + Offsets::m_MeshGroupMask, 1);
-                                    Sleep(10);
-                                }
-                                
-                                std::cout << "[Knife] HUD knife mesh mask updated" << std::endl;
-                            }
-                        }
-                        
-                        Sleep(50);
-                        
-                        // === STAGE 9: SECOND REGENERATION CALL (CRITICAL FOR EXTERNAL) ===
-                        // Many external tools fail because they don't do a second regeneration
-                        mem.CallThread(Sigs::RegenerateWeaponSkins);
-                        std::cout << "[Knife] Second RegenerateWeaponSkins called" << std::endl;
-                        Sleep(100);
-                        
-                        // === STAGE 10: FINAL VERIFICATION ===
-                        uint16_t verifyDefIndex = mem.Read<uint16_t>(item + Offsets::m_iItemDefinitionIndex);
-                        if (verifyDefIndex == skinManager->Knife.defIndex)
-                        {
-                            std::cout << "[Knife] ✓ Model change VERIFIED - DefIndex matches!" << std::endl;
-                        }
-                        else
-                        {
-                            std::cout << "[Knife] ✗ WARNING: DefIndex mismatch! Expected: " << skinManager->Knife.defIndex 
-                                     << " Got: " << verifyDefIndex << std::endl;
-                        }
-                        
-                        std::cout << "[Knife] ✓ Model force change COMPLETE" << std::endl;
-                    }
-                    else
-                    {
-                        std::cout << "[Knife] ! Knife model not found in database: " << skinManager->Knife.defIndex << std::endl;
-                    }
+                    mem.Write<uint16_t>(item + Offsets::m_iItemDefinitionIndex, skinManager->Knife.defIndex);
                 }
             }
 
@@ -362,6 +231,7 @@ int main()
 
         if (ShouldUpdate || ForceUpdate)
             UpdateWeapons(weapons);
+        }
 
         ForceUpdate = false;
         
