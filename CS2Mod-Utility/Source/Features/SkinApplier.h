@@ -33,11 +33,7 @@ private:
         if (!playerPawn)
             return;
 
-        auto activeWeapon = playerPawn.getActiveWeapon();
-        if (!activeWeapon)
-            return;
-
-        applyPaintKit(activeWeapon);
+        applyPaintKit(playerPawn.getActiveWeapon());
     }
 
     void applyPaintKit(auto&& weapon) noexcept
