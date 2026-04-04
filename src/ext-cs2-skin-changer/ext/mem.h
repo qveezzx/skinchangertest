@@ -61,19 +61,44 @@ public:
     }
 
 public:
-    // Constructor: auto-attaches to cs2.exe
-    Memory(const std::wstring& processName = L"cs2.exe") {
+    // Constructor: auto-attaches to cs2.exe (non-throwing, allows retry)
+    Memory(const std::wstring& processName = L"cs2.exe", bool throwOnFailure = false) {
         processId = GetProcessIdByName(processName);
-        if (!processId)
-            throw std::runtime_error("Failed to find process");
+        if (!processId) {
+            if (throwOnFailure)
+                throw std::runtime_error("Failed to find process");
+            return;
+        }
 
         hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
-        if (!hProcess)
+        if (!hProcess && throwOnFailure)
             throw std::runtime_error("Failed to open process handle");
     }
 
     ~Memory() {
         if (hProcess) CloseHandle(hProcess);
+    }
+
+    // Check if memory reader is connected to CS2
+    bool IsConnected() const {
+        return processId != 0 && hProcess != nullptr;
+    }
+
+    // Attempt to reconnect to the process
+    bool TryReconnect(const std::wstring& processName = L"cs2.exe") {
+        // Clean up old handle if it exists
+        if (hProcess) {
+            CloseHandle(hProcess);
+            hProcess = nullptr;
+        }
+
+        // Try to find and connect
+        processId = GetProcessIdByName(processName);
+        if (!processId)
+            return false;
+
+        hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
+        return hProcess != nullptr;
     }
 
     // Template Read
