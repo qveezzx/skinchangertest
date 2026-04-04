@@ -58,94 +58,186 @@ bool IsCS2Running()
 // ===== UI RENDERERS FOR WAITING STATE =====
 void RenderWaitingScreen(float x, float y, float w, float h)
 {
-    // Background
-    SC_GUI::DrawRect(x, y, w, h, Color(20, 20, 20, 200));
-    SC_GUI::DrawStrokeRoundedRect(x, y, w, h, 0.0f, Color(100, 100, 100, 255), 2.0f);
+    // Small window (not fullscreen) - centered
+    float boxW = 500.0f, boxH = 300.0f;
+    float boxX = (w - boxW) / 2.0f;
+    float boxY = (h - boxH) / 2.0f;
     
-    // Center text
-    float centerX = x + w / 2.0f;
-    float centerY = y + h / 2.0f;
+    // Dark background matching theme
+    SC_GUI::DrawRoundedRect(boxX, boxY, boxW, boxH, 12.0f, SC_GUI::currentTheme.mainBg);
+    SC_GUI::DrawStrokeRoundedRect(boxX, boxY, boxW, boxH, 12.0f, SC_GUI::currentTheme.accent, 2.0f);
     
+    // Top accent bar
+    SC_GUI::DrawRect(boxX, boxY, boxW, 4.0f, SC_GUI::currentTheme.accent);
+    
+    // Center content
+    float centerX = boxX + boxW / 2.0f;
+    float centerY = boxY + boxH / 2.0f;
+    
+    // Title
     SC_GUI::DrawStringA("Waiting for CS2...", 
-        centerX - 80.0f, centerY - 50.0f,
-        SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
+        centerX - 100.0f, centerY - 50.0f,
+        SC_GUI::currentTheme.accent, SC_GUI::titleFont, false);
     
-    SC_GUI::DrawStringA("Please launch Counter-Strike 2",
-        centerX - 120.0f, centerY,
+    // Divider
+    SC_GUI::DrawRect(boxX + 30.0f, centerY - 10.0f, boxW - 60.0f, 1.0f, SC_GUI::currentTheme.border);
+    
+    // Message
+    SC_GUI::DrawStringA("Please launch Counter-Strike 2", 
+        centerX - 120.0f, centerY + 20.0f,
         SC_GUI::currentTheme.text, SC_GUI::mainFont, false);
+    
+    SC_GUI::DrawStringA("or restart the application",
+        centerX - 90.0f, centerY + 50.0f,
+        SC_GUI::currentTheme.textDim, SC_GUI::mainFont, false);
 }
 
 void RenderLoadingScreen(float x, float y, float w, float h)
 {
-    // Background
-    SC_GUI::DrawRect(x, y, w, h, Color(25, 25, 25, 220));
-    SC_GUI::DrawStrokeRoundedRect(x, y, w, h, 0.0f, Color(100, 100, 100, 255), 2.0f);
+    // Fullscreen dark overlay
+    SC_GUI::DrawRect(x, y, w, h, SC_GUI::currentTheme.mainBg);
     
     float centerX = x + w / 2.0f;
     float centerY = y + h / 2.0f;
     
-    // Title
+    // Animated title
     SC_GUI::DrawStringA("Initializing...",
-        centerX - 60.0f, centerY - 60.0f,
-        SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
+        centerX - 80.0f, centerY - 120.0f,
+        SC_GUI::currentTheme.accent, SC_GUI::titleFont, false);
+    
+    // Animated loading dots
+    auto now = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - loadingStartTime).count();
+    int dotCount = ((elapsed / 300) % 4);
+    
+    std::string dots = "";
+    for (int i = 0; i < dotCount; i++) dots += ".";
+    for (int i = dotCount; i < 3; i++) dots += " ";
+    
+    SC_GUI::DrawStringA(dots, centerX + 90.0f, centerY - 120.0f,
+        SC_GUI::currentTheme.accent, SC_GUI::titleFont, false);
     
     // Progress bar
-    float barW = 300.0f, barH = 20.0f;
-    float barX = centerX - barW / 2.0f;
+    float barWidth = 400.0f;
+    float barHeight = 25.0f;
+    float barX = centerX - barWidth / 2.0f;
     float barY = centerY;
     
-    SC_GUI::DrawRect(barX, barY, barW, barH, Color(50, 50, 50, 200));
-    SC_GUI::DrawRect(barX + 2.0f, barY + 2.0f, (barW - 4.0f) * (loadingProgress / 100.0f), barH - 4.0f,
-        Color(100, 180, 255, 255));
-    SC_GUI::DrawStrokeRoundedRect(barX, barY, barW, barH, 0.0f, Color(100, 150, 200, 255), 1.5f);
+    // Background bar
+    SC_GUI::DrawRoundedRect(barX, barY, barWidth, barHeight, 6.0f, SC_GUI::currentTheme.contentBg);
     
-    // Status
-    SC_GUI::DrawStringA("Loading weapon skins...",
-        centerX - 90.0f,
-        centerY + 50.0f, SC_GUI::currentTheme.text, SC_GUI::mainFont, false);
+    // Progress fill (animated)
+    loadingProgress = std::min(100.0f, (float)elapsed / 2000.0f * 100.0f);
+    float fillWidth = (barWidth - 4.0f) * (loadingProgress / 100.0f);
+    SC_GUI::DrawRoundedRect(barX + 2.0f, barY + 2.0f, fillWidth, barHeight - 4.0f, 5.0f, SC_GUI::currentTheme.accent);
+    
+    // Border
+    SC_GUI::DrawStrokeRoundedRect(barX, barY, barWidth, barHeight, 6.0f, SC_GUI::currentTheme.border, 1.5f);
+    
+    // Progress percentage
+    char progressText[16];
+    sprintf_s(progressText, sizeof(progressText), "%.0f%%", loadingProgress);
+    SC_GUI::DrawStringA(progressText, centerX - 15.0f, barY + barHeight + 20.0f,
+        SC_GUI::currentTheme.text, SC_GUI::mainFont, false);
+    
+    // Status text (animated)
+    std::string statusTexts[] = {
+        "Loading weapon skins...",
+        "Initializing game hooks...",
+        "Preparing overlay system...",
+        "Ready to go!"
+    };
+    int statusIdx = std::min(3, (int)(loadingProgress / 25.0f));
+    
+    SC_GUI::DrawStringA(statusTexts[statusIdx], centerX - 100.0f, barY + barHeight + 80.0f,
+        SC_GUI::currentTheme.textDim, SC_GUI::mainFont, false);
 }
 
 void RenderBetaWarning(float x, float y, float w, float h)
 {
     if (!showBetaWarning) return;
     
-    // Overlay
-    SC_GUI::DrawRect(x, y, w, h, Color(0, 0, 0, 150));
+    // Dark overlay
+    SC_GUI::DrawRect(x, y, w, h, Color(0, 0, 0, 180));
     
-    // Warning box
-    float boxW = 400.0f, boxH = 200.0f;
+    // Warning box with theme colors
+    float boxW = 450.0f, boxH = 220.0f;
     float boxX = x + (w - boxW) / 2.0f;
     float boxY = y + (h - boxH) / 2.0f;
     
-    SC_GUI::DrawRoundedRect(boxX, boxY, boxW, boxH, 8.0f, Color(40, 40, 40, 255));
-    SC_GUI::DrawStrokeRoundedRect(boxX, boxY, boxW, boxH, 8.0f, Color(255, 200, 0, 255), 3.0f);
+    // Main background
+    SC_GUI::DrawRoundedRect(boxX, boxY, boxW, boxH, 12.0f, SC_GUI::currentTheme.mainBg);
+    
+    // Accent border
+    SC_GUI::DrawStrokeRoundedRect(boxX, boxY, boxW, boxH, 12.0f, SC_GUI::currentTheme.accent, 2.5f);
+    
+    // Top accent bar
+    SC_GUI::DrawRect(boxX, boxY, boxW, 4.0f, SC_GUI::currentTheme.accent);
     
     // Title
     SC_GUI::DrawStringA("BETA WARNING",
-        boxX + 120.0f, boxY + 20.0f,
-        Color(255, 200, 0, 255), SC_GUI::titleFont, false);
+        boxX + 25.0f, boxY + 30.0f,
+        SC_GUI::currentTheme.accent, SC_GUI::titleFont, false);
+    
+    // Divider line
+    SC_GUI::DrawRect(boxX + 20.0f, boxY + 70.0f, boxW - 40.0f, 1.0f, SC_GUI::currentTheme.border);
     
     // Message
     SC_GUI::DrawStringA("This feature may not work reliably.",
-        boxX + 70.0f, boxY + 60.0f, 
-        Color(200, 200, 200, 255), SC_GUI::mainFont, false);
+        boxX + 25.0f, boxY + 85.0f, 
+        SC_GUI::currentTheme.text, SC_GUI::mainFont, false);
+    
+    SC_GUI::DrawStringA("Use at your own risk.",
+        boxX + 25.0f, boxY + 110.0f, 
+        SC_GUI::currentTheme.textDim, SC_GUI::mainFont, false);
     
     // OK Button
-    float buttonW = 100.0f, buttonH = 35.0f;
+    float buttonW = 120.0f, buttonH = 40.0f;
     float buttonX = boxX + (boxW - buttonW) / 2.0f;
-    float buttonY = boxY + boxH - 50.0f;
+    float buttonY = boxY + boxH - 55.0f;
     
-    if (SC_GUI::Button("beta_warning_ok", "OK", buttonX, buttonY, buttonW, buttonH)) {
+    if (SC_GUI::Button("beta_warning_ok", "OK, I UNDERSTAND", buttonX, buttonY, buttonW, buttonH)) {
         showBetaWarning = false;
     }
 }
 
 void RenderWeaponTab(float x, float y, float w, float h)
 {
-    // Search Box
-    SC_GUI::TextInput("search_wep", searchBuffer, 128, x + 20, y + 20, 300, 35, "Search Skins...");
+    // Search Box area with better styling
+    float searchY = y + 15;
+    float searchBoxW = 280.0f;
+    float searchBoxH = 40.0f;
+    float searchX = x + 20;
     
-    // Scroll State
+    // Search bar background
+    SC_GUI::DrawRoundedRect(searchX, searchY, searchBoxW, searchBoxH, 6.0f, Color(35, 35, 45, 255));
+    SC_GUI::DrawStrokeRoundedRect(searchX, searchY, searchBoxW, searchBoxH, 6.0f, Color(100, 100, 120, 200), 1.5f);
+    
+    // Search input field
+    SC_GUI::TextInput("search_wep", searchBuffer, 128, searchX + 8, searchY + 7, searchBoxW - 16, searchBoxH - 14, "Search Skins...");
+    
+    // Utility buttons
+    float buttonW = 45.0f;
+    float buttonH = 40.0f;
+    float buttonY = searchY;
+    float buttonX1 = searchX + searchBoxW + 12;
+    float buttonX2 = buttonX1 + buttonW + 8;
+    float buttonX3 = buttonX2 + buttonW + 8;
+    
+    // Clear button
+    if (SC_GUI::Button("btn_clear", "Clear", buttonX1, buttonY, buttonW, buttonH)) {
+        memset(searchBuffer, 0, sizeof(searchBuffer));
+    }
+    
+    // Sort button (placeholder for future sorting)
+    if (SC_GUI::Button("btn_sort", "Sort", buttonX2, buttonY, buttonW, buttonH)) {
+        // Future: toggle sort options
+    }
+    
+    // Filter button (placeholder for future filtering)
+    if (SC_GUI::Button("btn_filter", "Filter", buttonX3, buttonY, buttonW, buttonH)) {
+        // Future: show filter menu
+    }
     static float scrollY = 0.0f;
     float contentHeight = 0.0f;
 
