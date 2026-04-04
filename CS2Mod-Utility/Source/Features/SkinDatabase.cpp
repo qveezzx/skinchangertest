@@ -10,7 +10,6 @@ void SkinDatabase::initialize() noexcept {
         return;
 
     loadDefaultSkins();
-    loadDefaultMusicKits();
     initialized = true;
 }
 
@@ -21,8 +20,8 @@ const std::vector<SkinInfo_t>& SkinDatabase::getSkinsForWeapon(WeaponsEnum weapo
     return EMPTY_SKINS;
 }
 
-const std::vector<MusicKit_t>& SkinDatabase::getMusicKits() const noexcept {
-    return musicKitsList;
+const std::array<MusicKitInfo, 71>& SkinDatabase::getMusicKits() const noexcept {
+    return MUSIC_KITS;
 }
 
 void SkinDatabase::loadDefaultSkins() noexcept {
@@ -46,13 +45,6 @@ void SkinDatabase::loadDefaultSkins() noexcept {
         // In production, this would load from JSON API or cache file
         if (!skins.empty())
             weaponSkinsMap[weaponEnum] = skins;
-    }
-}
-
-void SkinDatabase::loadDefaultMusicKits() noexcept {
-    // Load all music kits from the MUSIC_KITS array
-    for (const auto& kit : MUSIC_KITS) {
-        musicKitsList.push_back(kit);
     }
 }
 

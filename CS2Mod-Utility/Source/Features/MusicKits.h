@@ -2,6 +2,7 @@
 
 #include <Features/SkinManager.h>
 #include <array>
+#include <string_view>
 
 namespace skin_changer {
 
@@ -79,7 +80,12 @@ enum class MusicKit : std::uint16_t {
     UnderBrightLights = 76
 };
 
-constexpr std::array<MusicKit_t, 71> MUSIC_KITS{{
+struct MusicKitInfo {
+    std::uint16_t id;
+    std::string_view name;
+};
+
+constexpr std::array<MusicKitInfo, 71> MUSIC_KITS{{
     {1, "Counter-Strike 2"},
     {2, "Valve CSGO 2 (hidden)"},
     {3, "Crimson Assault"},
@@ -154,3 +160,4 @@ constexpr std::array<MusicKit_t, 71> MUSIC_KITS{{
 }};
 
 }
+

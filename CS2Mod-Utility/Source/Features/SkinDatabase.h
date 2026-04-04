@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Features/SkinManager.h>
+#include <Features/MusicKits.h>
 #include <map>
 #include <vector>
 
@@ -13,7 +14,7 @@ public:
     void initialize() noexcept;
 
     [[nodiscard]] const std::vector<SkinInfo_t>& getSkinsForWeapon(WeaponsEnum weaponType) const noexcept;
-    [[nodiscard]] const std::vector<MusicKit_t>& getMusicKits() const noexcept;
+    [[nodiscard]] const std::array<MusicKitInfo, 71>& getMusicKits() const noexcept;
 
     static SkinDatabase& instance() noexcept {
         static SkinDatabase db;
@@ -22,11 +23,9 @@ public:
 
 private:
     std::map<WeaponsEnum, std::vector<SkinInfo_t>> weaponSkinsMap;
-    std::vector<MusicKit_t> musicKitsList;
     bool initialized = false;
 
     void loadDefaultSkins() noexcept;
-    void loadDefaultMusicKits() noexcept;
 };
 
 }

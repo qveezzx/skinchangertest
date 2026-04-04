@@ -5,7 +5,6 @@
 #include <Features/SkinDatabase.h>
 #include <Features/MusicKits.h>
 #include <Features/WeaponDetection.h>
-#include <CS2/Classes/CEntityIdentity.h>
 #include <GameClient/EntitySystem/EntitySystem.h>
 #include <HookContext/HookContextMacros.h>
 #include <optional>
