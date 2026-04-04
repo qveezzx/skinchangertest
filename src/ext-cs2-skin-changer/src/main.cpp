@@ -76,10 +76,12 @@ int main()
         
         if (mem.IsConnected()) {
             cs2Found = true;
+            // Give CS2 ~1 second to fully initialize after connection
+            Sleep(1000);
         }
     }
 
-    // === PHASE 2: CS2 FOUND - INDEXING SKINS (5 second loading) ===
+    // === PHASE 2: CS2 FOUND - INDEXING SKINS (5+ second loading) ===
     if (!overlay::ShouldQuit) {
         std::cout << "CS2 Found! Indexing skins...\n";
         
@@ -103,6 +105,17 @@ int main()
             Sleep(100);
             OnFrame();
         }
+        
+        // Additional delay after indexing to ensure weapon list is populated
+        std::cout << "Indexing complete, finalizing weapon list...\n";
+        Sleep(500);
+        
+        // Force UpdateOffsets and retrieve weapon list at least once before starting main loop
+        const uintptr_t localPlayer = GetLocalPlayer();
+        if (localPlayer) {
+            const std::vector<uintptr_t> weapons = GetWeapons(localPlayer);
+            std::cout << "Initial weapon list populated: " << weapons.size() << " weapons found\n";
+        }
     }
 
     // === PHASE 3: MAIN SKINCHANGER LOOP ===
@@ -123,12 +136,10 @@ int main()
 
         bool ShouldUpdate = false;
 
-        static int updateCounter = 0;
-        updateCounter++;
-        
-        // Only process weapons every 2 frames (~10ms) to reduce CPU usage
-        if (updateCounter % 2 == 0)
+        // Process weapons every frame for consistent skin application
+        // (removed updateCounter optimization to ensure skin applies immediately)
         {
+
             const std::vector<uintptr_t> weapons = GetWeapons(localPlayer);
     /*
     //clean up & hud update
@@ -166,6 +177,15 @@ int main()
                 continue;
 
             mem.Write<uint32_t>(weapon + Offsets::m_nFallbackPaintKit, skin.Paint);
+            
+            // Also update weapon name with skin name
+            const uintptr_t itemView = item; // item is C_EconItemView
+            if (!skin.name.empty()) {
+                // Write skin name to weapon (max 160 chars for name override)
+                char nameBuf[161] = {0};
+                strncpy_s(nameBuf, sizeof(nameBuf), skin.name.c_str(), _TRUNCATE);
+                WriteProcessMemory(mem.hProcess, reinterpret_cast<LPVOID>(itemView + Offsets::m_szCustomNameOverride), nameBuf, sizeof(nameBuf), nullptr);
+            }
 
             const uint64_t mask = skin.bUsesOldModel + 1;
 

@@ -27,6 +27,12 @@ static const ULONGLONG INDEXING_DURATION = 5000; // 5 seconds
 static bool isChangingSkin = false;
 static ULONGLONG skinChangeStartTime = 0;
 
+// Menu bounds (updated every frame for loading box positioning)
+static float menuX = -1;
+static float menuY = -1;
+static float menuW = 1000;
+static float menuH = 700;
+
 void UpdateSearchInput() {
 }
 
@@ -649,7 +655,7 @@ void RenderIndexingSkinsScreen()
     }
 }
 
-// Loading messagebox for skin changes (overlay on main menu)
+// Loading messagebox for skin changes (overlay on main menu - not fullscreen)
 void RenderSkinChangeLoadingBox()
 {
     if (!isChangingSkin) return;
@@ -657,11 +663,12 @@ void RenderSkinChangeLoadingBox()
     float w = 280;
     float h = 160;
     
-    float x = (overlay::G_Width - w) / 2;
-    float y = (overlay::G_Height - h) / 2;
+    // Center within the menu instead of screen
+    float x = menuX + (menuW - w) / 2;
+    float y = menuY + (menuH - h) / 2;
 
-    // Backdrop (semi-transparent overlay)
-    SC_GUI::DrawRect(0, 0, (float)overlay::G_Width, (float)overlay::G_Height, Color(255, 0, 0, 100));
+    // Semi-transparent backdrop ONLY over the menu area
+    SC_GUI::DrawRect(menuX, menuY, menuW, menuH, Color(255, 0, 0, 100));
 
     // Message box Background
     SC_GUI::DrawRoundedRect(x, y, w, h, 12, SC_GUI::currentTheme.mainBg);
@@ -716,6 +723,12 @@ void RenderMenu()
         x = (overlay::G_Width - w) / 2;
         y = (overlay::G_Height - h) / 2;
     }
+    
+    // Update global menu bounds for loading box positioning
+    menuX = x;
+    menuY = y;
+    menuW = w;
+    menuH = h;
 
     // Dragging Logic (Header Area)
     if (SC_GUI::Input.leftClick) {
