@@ -220,8 +220,7 @@ void RenderKnifeTab(float x, float y, float w, float h)
     float viewY = curY;
     float viewH = (y + h) - viewY;
     float itemW = 140; float itemH = 160; float pad = 15;
-    int cols = (int)((w - 40) / (itemW + pad));
-    if (cols < 1) cols = 1;
+    int cols = 6;
     
     // Input for Knife Grid
     if (SC_GUI::Input.mousePos.y > viewY) {
@@ -451,7 +450,7 @@ void RenderGloveTab(float x, float y, float w, float h)
     for (int i=0; i < (int)GloveTypes.size(); i++) {
          bool active = (selectedGloveIdx == i);
          // Mini Tab Button
-         if (SC_GUI::TabButton("glove_type_" + std::to_string(i), GloveTypes[i].name, typeX + 5, curY, typeW - 10, 40, active)) {
+         if (SC_GUI::TabButton("glove_type_" + std::to_string(i), GloveTypes[i].name, typeX + 5, curY, typeW - 10, 40, active, "", SC_GUI::smallFont)) {
              selectedGloveIdx = i;
              // Reset skin selection offset?
          }
@@ -472,8 +471,7 @@ void RenderGloveTab(float x, float y, float w, float h)
     float cardW = 180;
     float cardH = 220;
     float gap = 15;
-    int cols = (int)((skinW / (cardW + gap)));
-    if (cols < 1) cols = 1;
+    int cols = 4;
     
     // Safety
     if (gloves.empty()) {
@@ -752,8 +750,8 @@ void RenderMenu()
     float logoSize = 42.0f;
     SC_GUI::DrawRoundedRect(x + 24, y + 24, logoSize, logoSize, 10.0f, SC_GUI::currentTheme.accent);
     SC_GUI::DrawStringA("B", x + 24 + logoSize/2, y + 24 + logoSize/2, Color(255,255,255,255), SC_GUI::titleFont, true);
-    SC_GUI::DrawStringA("ERSERK", x + 24 + logoSize + 10, y + 30, SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
-    SC_GUI::DrawStringA("Skinchanger", x + 24 + logoSize + 10, y + 62, SC_GUI::currentTheme.textDim, SC_GUI::mainFont, false);
+    SC_GUI::DrawStringA("ERSERK", x + 24 + logoSize + 6, y + 28, SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
+    SC_GUI::DrawStringA("Skinchanger", x + 24 + logoSize + 6, y + 58, SC_GUI::currentTheme.textDim, SC_GUI::mainFont, false);
 
     // Top icon tabs row
     float navY = y + 88;

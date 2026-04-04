@@ -531,7 +531,7 @@ namespace SC_GUI {
     // --- Widgets ---
 
     // Modern Sidebar Tab
-    inline bool TabButton(const std::string& id, const std::string& text, float x, float y, float w, float h, bool active, const std::string& icon = "") {
+    inline bool TabButton(const std::string& id, const std::string& text, float x, float y, float w, float h, bool active, const std::string& icon = "", Font* font = nullptr) {
         bool hovered = (Input.mousePos.x >= x && Input.mousePos.x <= x + w && Input.mousePos.y >= y && Input.mousePos.y <= y + h);
         bool clicked = hovered && Input.leftClicked;
 
@@ -583,7 +583,8 @@ namespace SC_GUI {
             brush->SetColor(txtColor);
             RectF layout((REAL)x, (REAL)y, (REAL)w, (REAL)h);
             std::wstring wtext(text.begin(), text.end());
-            gfx->DrawString(wtext.c_str(), -1, largeFont, layout, centerFormat, brush);
+            Font* drawFont = font ? font : largeFont;
+            gfx->DrawString(wtext.c_str(), -1, drawFont, layout, centerFormat, brush);
         }
 
         return clicked;
