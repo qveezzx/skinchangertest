@@ -178,21 +178,12 @@ int main()
 
             mem.Write<uint32_t>(weapon + Offsets::m_nFallbackPaintKit, skin.Paint);
             
-            // Force update weapon name with skin name (clean up pipe character)
+            // Force update weapon name with full skin name (AK-47 | Asiimov format)
             const uintptr_t itemView = item; // item is C_EconItemView
             if (!skin.name.empty()) {
-                // Extract just the skin name part (after pipe if exists)
-                std::string cleanName = skin.name;
-                
-                // Remove " | " pattern and keep only the skin part
-                size_t pipePos = cleanName.find(" | ");
-                if (pipePos != std::string::npos) {
-                    cleanName = cleanName.substr(pipePos + 3); // Get everything after " | "
-                }
-                
-                // Write cleaned skin name to weapon (max 160 chars for name override)
+                // Use full skin name as-is
                 char nameBuf[161] = {0};
-                strncpy_s(nameBuf, sizeof(nameBuf), cleanName.c_str(), _TRUNCATE);
+                strncpy_s(nameBuf, sizeof(nameBuf), skin.name.c_str(), _TRUNCATE);
                 
                 // Force name update by resetting item state flags
                 mem.Write<uint32_t>(itemView + Offsets::m_iItemIDHigh, -1);  // Reset item ID to force re-application
