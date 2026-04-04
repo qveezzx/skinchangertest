@@ -1,4 +1,5 @@
 #pragma once
+#define NOMINMAX
 #include "SDK/weapon/C_EconEntity.h"
 #include "../ext/skindb.h"
 #include "window/window.hpp"
