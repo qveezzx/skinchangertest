@@ -52,8 +52,8 @@ void RenderWeaponTab(float x, float y, float w, float h)
     float viewH = h - 70;
 
     // Grid Settings
-    float itemW = 140; float itemH = 160; float pad = 15;
-    int cols = (int)((viewW - 40) / (itemW + pad));
+    float itemW = 140; float itemH = 160; float pad = 12;
+    int cols = (int)((viewW - 16) / (itemW + pad));
     if (cols < 1) cols = 1;
 
     // Handle Input
@@ -707,14 +707,36 @@ void RenderMenu()
     menuH = h;
 
     // Dragging Logic (Header Area)
-    if (SC_GUI::Input.leftClick) {
-        // Allow dragging entire top header
-        if (SC_GUI::Input.mousePos.x >= x && SC_GUI::Input.mousePos.x <= x + w &&
-            SC_GUI::Input.mousePos.y >= y && SC_GUI::Input.mousePos.y <= y + 80) {
-            x += SC_GUI::Input.mouseDelta.x;
-            y += SC_GUI::Input.mouseDelta.y;
+    static bool draggingMenu = false;
+    static POINT dragStart = {0, 0};
+    static float dragX = 0.0f;
+    static float dragY = 0.0f;
+
+    bool headerHovered = SC_GUI::Input.mousePos.x >= x && SC_GUI::Input.mousePos.x <= x + w &&
+                         SC_GUI::Input.mousePos.y >= y && SC_GUI::Input.mousePos.y <= y + 80;
+
+    if (SC_GUI::Input.leftClicked && headerHovered) {
+        draggingMenu = true;
+        dragStart = SC_GUI::Input.mousePos;
+        dragX = x;
+        dragY = y;
+    }
+
+    if (draggingMenu) {
+        if (SC_GUI::Input.leftClick) {
+            x = dragX + (SC_GUI::Input.mousePos.x - dragStart.x);
+            y = dragY + (SC_GUI::Input.mousePos.y - dragStart.y);
+        } else {
+            draggingMenu = false;
         }
     }
+
+    // Constrain to screen bounds so it doesn't go totally offscreen
+    float margin = 40.0f;
+    if (x < -w + margin) x = -w + margin;
+    if (y < -h + margin) y = -h + margin;
+    if (x > overlay::G_Width - margin) x = overlay::G_Width - margin;
+    if (y > overlay::G_Height - margin) y = overlay::G_Height - margin;
 
     // Main Window Background
     SC_GUI::DrawRoundedRect(x, y, w, h, 10, SC_GUI::currentTheme.mainBg);
@@ -730,13 +752,13 @@ void RenderMenu()
     float logoSize = 42.0f;
     SC_GUI::DrawRoundedRect(x + 24, y + 24, logoSize, logoSize, 10.0f, SC_GUI::currentTheme.accent);
     SC_GUI::DrawStringA("B", x + 24 + logoSize/2, y + 24 + logoSize/2, Color(255,255,255,255), SC_GUI::titleFont, true);
-    SC_GUI::DrawStringA("BERSERK", x + 24 + logoSize + 16, y + 30, SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
-    SC_GUI::DrawStringA("Skinchanger", x + 24 + logoSize + 16, y + 64, SC_GUI::currentTheme.textDim, SC_GUI::mainFont, false);
+    SC_GUI::DrawStringA("ERSERK", x + 24 + logoSize + 10, y + 30, SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
+    SC_GUI::DrawStringA("Skinchanger", x + 24 + logoSize + 10, y + 62, SC_GUI::currentTheme.textDim, SC_GUI::mainFont, false);
 
     // Top icon tabs row
-    float navY = y + 85;
-    float buttonSize = 58;
-    float buttonGap = 12;
+    float navY = y + 88;
+    float buttonSize = 52;
+    float buttonGap = 10;
     float buttonsTotal = buttonSize * 5 + buttonGap * 4;
     float startX = x + 20 + (w - 40 - buttonsTotal) / 2;
 
