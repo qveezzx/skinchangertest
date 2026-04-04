@@ -42,7 +42,7 @@ bool IsCS2Running()
     if (Process32First(hProcessSnap, &pe32))
     {
         do {
-            if (_stricmp(pe32.szExeFile, "cs2.exe") == 0)
+            if (_wcsicmp(pe32.szExeFile, L"cs2.exe") == 0)
             {
                 CloseHandle(hProcessSnap);
                 return true;
@@ -59,7 +59,7 @@ void RenderWaitingScreen(float x, float y, float w, float h)
 {
     // Background
     SC_GUI::DrawRect(x, y, w, h, Color(20, 20, 20, 200));
-    SC_GUI::DrawBorder(x, y, w, h, Color(100, 100, 100, 255), 2.0f);
+    SC_GUI::DrawStrokeRoundedRect(x, y, w, h, 0.0f, Color(100, 100, 100, 255), 2.0f);
     
     // Center text
     float centerX = x + w / 2.0f;
@@ -78,7 +78,7 @@ void RenderLoadingScreen(float x, float y, float w, float h)
 {
     // Background
     SC_GUI::DrawRect(x, y, w, h, Color(25, 25, 25, 220));
-    SC_GUI::DrawBorder(x, y, w, h, Color(100, 100, 100, 255), 2.0f);
+    SC_GUI::DrawStrokeRoundedRect(x, y, w, h, 0.0f, Color(100, 100, 100, 255), 2.0f);
     
     float centerX = x + w / 2.0f;
     float centerY = y + h / 2.0f;
@@ -96,7 +96,7 @@ void RenderLoadingScreen(float x, float y, float w, float h)
     SC_GUI::DrawRect(barX, barY, barW, barH, Color(50, 50, 50, 200));
     SC_GUI::DrawRect(barX + 2.0f, barY + 2.0f, (barW - 4.0f) * (loadingProgress / 100.0f), barH - 4.0f,
         Color(100, 180, 255, 255));
-    SC_GUI::DrawBorder(barX, barY, barW, barH, Color(100, 150, 200, 255), 1.5f);
+    SC_GUI::DrawStrokeRoundedRect(barX, barY, barW, barH, 0.0f, Color(100, 150, 200, 255), 1.5f);
     
     // Status
     SC_GUI::DrawStringA("Loading weapon skins...",
@@ -117,7 +117,7 @@ void RenderBetaWarning(float x, float y, float w, float h)
     float boxY = y + (h - boxH) / 2.0f;
     
     SC_GUI::DrawRoundedRect(boxX, boxY, boxW, boxH, 8.0f, Color(40, 40, 40, 255));
-    SC_GUI::DrawBorder(boxX, boxY, boxW, boxH, Color(255, 200, 0, 255), 3.0f);
+    SC_GUI::DrawStrokeRoundedRect(boxX, boxY, boxW, boxH, 8.0f, Color(255, 200, 0, 255), 3.0f);
     
     // Title
     SC_GUI::DrawStringA("BETA WARNING",
