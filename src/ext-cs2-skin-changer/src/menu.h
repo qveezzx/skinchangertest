@@ -58,37 +58,34 @@ bool IsCS2Running()
 void RenderWaitingScreen(float x, float y, float w, float h)
 {
     // Background
-    SC_GUI::DrawRect(x, y, w, h, ImColor(20, 20, 20, 200));
-    SC_GUI::DrawBorder(x, y, w, h, ImColor(100, 100, 100, 255), 2.0f);
+    SC_GUI::DrawRect(x, y, w, h, Color(20, 20, 20, 200));
+    SC_GUI::DrawBorder(x, y, w, h, Color(100, 100, 100, 255), 2.0f);
     
     // Center text
     float centerX = x + w / 2.0f;
     float centerY = y + h / 2.0f;
     
-    ImVec2 textSize = ImGui::CalcTextSize("Waiting for CS2...");
     SC_GUI::DrawStringA("Waiting for CS2...", 
-        centerX - textSize.x / 2.0f, centerY - 50.0f,
+        centerX - 80.0f, centerY - 50.0f,
         SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
     
-    ImVec2 instrSize = ImGui::CalcTextSize("Please launch Counter-Strike 2");
     SC_GUI::DrawStringA("Please launch Counter-Strike 2",
-        centerX - instrSize.x / 2.0f, centerY,
+        centerX - 120.0f, centerY,
         SC_GUI::currentTheme.text, SC_GUI::mainFont, false);
 }
 
 void RenderLoadingScreen(float x, float y, float w, float h)
 {
     // Background
-    SC_GUI::DrawRect(x, y, w, h, ImColor(25, 25, 25, 220));
-    SC_GUI::DrawBorder(x, y, w, h, ImColor(100, 100, 100, 255), 2.0f);
+    SC_GUI::DrawRect(x, y, w, h, Color(25, 25, 25, 220));
+    SC_GUI::DrawBorder(x, y, w, h, Color(100, 100, 100, 255), 2.0f);
     
     float centerX = x + w / 2.0f;
     float centerY = y + h / 2.0f;
     
     // Title
-    ImVec2 titleSize = ImGui::CalcTextSize("Initializing...");
     SC_GUI::DrawStringA("Initializing...",
-        centerX - titleSize.x / 2.0f, centerY - 60.0f,
+        centerX - 60.0f, centerY - 60.0f,
         SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
     
     // Progress bar
@@ -96,15 +93,14 @@ void RenderLoadingScreen(float x, float y, float w, float h)
     float barX = centerX - barW / 2.0f;
     float barY = centerY;
     
-    SC_GUI::DrawRect(barX, barY, barW, barH, ImColor(50, 50, 50, 200));
+    SC_GUI::DrawRect(barX, barY, barW, barH, Color(50, 50, 50, 200));
     SC_GUI::DrawRect(barX + 2.0f, barY + 2.0f, (barW - 4.0f) * (loadingProgress / 100.0f), barH - 4.0f,
-        ImColor(100, 180, 255, 255));
-    SC_GUI::DrawBorder(barX, barY, barW, barH, ImColor(100, 150, 200, 255), 1.5f);
+        Color(100, 180, 255, 255));
+    SC_GUI::DrawBorder(barX, barY, barW, barH, Color(100, 150, 200, 255), 1.5f);
     
     // Status
-    ImVec2 statusSize = ImGui::CalcTextSize("Loading weapon skins...");
     SC_GUI::DrawStringA("Loading weapon skins...",
-        centerX - statusSize.x / 2.0f,
+        centerX - 90.0f,
         centerY + 50.0f, SC_GUI::currentTheme.text, SC_GUI::mainFont, false);
 }
 
@@ -113,27 +109,25 @@ void RenderBetaWarning(float x, float y, float w, float h)
     if (!showBetaWarning) return;
     
     // Overlay
-    SC_GUI::DrawRect(x, y, w, h, ImColor(0, 0, 0, 150));
+    SC_GUI::DrawRect(x, y, w, h, Color(0, 0, 0, 150));
     
     // Warning box
     float boxW = 400.0f, boxH = 200.0f;
     float boxX = x + (w - boxW) / 2.0f;
     float boxY = y + (h - boxH) / 2.0f;
     
-    SC_GUI::DrawRoundedRect(boxX, boxY, boxW, boxH, 8.0f, ImColor(40, 40, 40, 255));
-    SC_GUI::DrawBorder(boxX, boxY, boxW, boxH, ImColor(255, 200, 0, 255), 3.0f);
+    SC_GUI::DrawRoundedRect(boxX, boxY, boxW, boxH, 8.0f, Color(40, 40, 40, 255));
+    SC_GUI::DrawBorder(boxX, boxY, boxW, boxH, Color(255, 200, 0, 255), 3.0f);
     
     // Title
-    ImVec2 titleSize = ImGui::CalcTextSize("BETA WARNING");
     SC_GUI::DrawStringA("BETA WARNING",
-        boxX + (boxW - titleSize.x) / 2.0f, boxY + 20.0f,
-        ImColor(255, 200, 0, 255), SC_GUI::titleFont, false);
+        boxX + 120.0f, boxY + 20.0f,
+        Color(255, 200, 0, 255), SC_GUI::titleFont, false);
     
     // Message
-    ImVec2 msgSize = ImGui::CalcTextSize("This feature may not work reliably.");
     SC_GUI::DrawStringA("This feature may not work reliably.",
-        boxX + (boxW - msgSize.x) / 2.0f, boxY + 60.0f, 
-        ImColor(200, 200, 200, 255), SC_GUI::mainFont, false);
+        boxX + 70.0f, boxY + 60.0f, 
+        Color(200, 200, 200, 255), SC_GUI::mainFont, false);
     
     // OK Button
     float buttonW = 100.0f, buttonH = 35.0f;
@@ -749,6 +743,11 @@ void RenderMenu()
         case 4: RenderGloveTab(cX, cY, cW, cH); break;
     }
     SC_GUI::ResetClip();
+    
+    // Render beta warning modal if active
+    if (showBetaWarning) {
+        RenderBetaWarning(0.0f, 0.0f, (float)overlay::G_Width, (float)overlay::G_Height);
+    }
 }
 
 void OnFrame()
@@ -804,17 +803,8 @@ void OnFrame()
     }
     prevInsert = insert;
 
-    // Render beta warning on top if active
-    if (showBetaWarning) {
-        // Render with overlay to show warning
-        overlay::Render([](){ 
-            RenderBetaWarning(0.0f, 0.0f, (float)overlay::G_Width, (float)overlay::G_Height);
-            if (MenuOpen) RenderMenu();
-        }, true);
-    } else {
-        // Normal menu rendering
-        overlay::Render(RenderMenu, MenuOpen);
-    }
+    // Normal menu rendering (beta warning renders on top if needed)
+    overlay::Render(RenderMenu, MenuOpen);
 }
 
 void MenuThread()

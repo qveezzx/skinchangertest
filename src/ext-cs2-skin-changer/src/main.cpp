@@ -131,19 +131,15 @@ int main()
             
             if (isKnife && skinManager->Knife.defIndex != 0)
             {
-                static uint64_t lastKnifeItemID = 0;
                 static uint16_t lastKnifeDefIndex = 0;
                 
-                uint64_t currentItemID = mem.Read<uint64_t>(item + Offsets::m_iItemID);
                 uint16_t currentDefIndex = mem.Read<uint16_t>(item + Offsets::m_iItemDefinitionIndex);
                 
-                // Check if knife changed or item ID changed
-                bool knifeChanged = (skinManager->Knife.defIndex != lastKnifeDefIndex) || 
-                                   (currentItemID != lastKnifeItemID);
-                
+                // Check if knife changed
+                bool knifeChanged = (skinManager->Knife.defIndex != lastKnifeDefIndex);
+                 
                 if (knifeChanged)
                 {
-                    lastKnifeItemID = currentItemID;
                     lastKnifeDefIndex = skinManager->Knife.defIndex;
                     
                     std::cout << "[Knife] Initiating model force change to: " << skinManager->Knife.name << " (ID: " << skinManager->Knife.defIndex << ")" << std::endl;
@@ -157,7 +153,6 @@ int main()
                     
                     // === STAGE 2: FORCE ITEM ID INVALIDATION ===
                     // This forces game to treat it as a new item
-                    mem.Write<uint64_t>(item + Offsets::m_iItemID, 0);
                     mem.Write<uint32_t>(item + Offsets::m_iItemIDHigh, -1);
                     
                     Sleep(25);
