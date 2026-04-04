@@ -40,67 +40,64 @@ private:
 
     void applySkins() noexcept
     {
-        try {
-            auto playerPawn = hookContext.activeLocalPlayerPawn();
-            if (!playerPawn)
-                return;
+        auto playerPawn = hookContext.activeLocalPlayerPawn();
+        if (!playerPawn)
+            return;
 
-            WeaponDetection<HookContext> weaponDetection{hookContext};
-            auto weapons = weaponDetection.getAllWeapons();
+        WeaponDetection<HookContext> weaponDetection{hookContext};
+        auto weapons = weaponDetection.getAllWeapons();
 
-            for (auto weaponPtr : weapons) {
-                if (!weaponPtr)
-                    continue;
+        for (auto weaponPtr : weapons) {
+            if (weaponPtr == 0)
+                continue;
 
-                applyPaintKitToWeapon(reinterpret_cast<std::uintptr_t>(weaponPtr));
-            }
-        } catch (...) {
-            // Silent failure - don't crash on memory access errors
+            applyPaintKitToWeapon(weaponPtr);
         }
     }
 
     void applyPaintKitToWeapon(std::uintptr_t weaponPtr) noexcept
     {
-        try {
-            if (!weaponPtr)
-                return;
+        if (weaponPtr == 0)
+            return;
 
-            // Get weapon definition index to determine what type of weapon this is
-            // For now, we apply vanilla (Paint ID 0) as a default
-            // In production, this would read the equipped skin from SkinManager
-            
-            // Write paint kit (vanilla = 0)
-            const auto paintKit = 0u;
-            *reinterpret_cast<std::uint32_t*>(weaponPtr + 0x1540) = paintKit;
-        } catch (...) {
-            // Silent failure
-        }
+        // Get weapon definition index to determine what type of weapon this is
+        // For now, we apply vanilla (Paint ID 0) as a default
+        // In production, this would read the equipped skin from SkinManager
+        
+        // Write paint kit (vanilla = 0)
+        const auto paintKit = 0u;
+        
+        // m_nFallbackPaintKit offset = 0x1540
+        auto paintKitPtr = reinterpret_cast<std::uint32_t*>(weaponPtr + 0x1540);
+        *paintKitPtr = paintKit;
     }
 
     void applyMusicKit() noexcept
     {
-        try {
-            auto playerController = hookContext.activeLocalPlayerController();
-            if (!playerController)
-                return;
+        auto playerController = hookContext.localPlayerController();
+        if (!playerController)
+            return;
 
-            // Read selected music kit from config
-            const auto selectedMusicKitId = GET_CONFIG_VAR(music_kits_vars::SelectedMusicKit);
+        // Read selected music kit from config
+        const auto selectedMusicKitId = GET_CONFIG_VAR(music_kits_vars::SelectedMusicKit);
 
-            // Get inventory services from player controller
-            // Offset: m_pInventoryServices = 0x700
-            auto inventoryServicesPtr = *reinterpret_cast<std::uintptr_t*>(
-                reinterpret_cast<std::uintptr_t>(playerController) + 0x700
-            );
+        // PlayerController is a wrapper - convert to raw pointer for offset operations
+        auto controllerRawPtr = playerController.operator*();
+        auto controllerAddr = reinterpret_cast<std::uintptr_t>(controllerRawPtr);
 
-            if (!inventoryServicesPtr)
-                return;
+        // Get inventory services from player controller
+        // Offset: m_pInventoryServices = 0x700
+        if (controllerAddr == 0)
+            return;
 
-            // Write music kit ID to m_unMusicID (offset 0x40)
-            *reinterpret_cast<std::uint16_t*>(inventoryServicesPtr + 0x40) = selectedMusicKitId;
-        } catch (...) {
-            // Silent failure
-        }
+        auto inventoryServicesPtr = *reinterpret_cast<std::uintptr_t*>(controllerAddr + 0x700);
+
+        if (inventoryServicesPtr == 0)
+            return;
+
+        // Write music kit ID to m_unMusicID (offset 0x40)
+        auto musicKitIdPtr = reinterpret_cast<std::uint16_t*>(inventoryServicesPtr + 0x40);
+        *musicKitIdPtr = selectedMusicKitId;
     }
 };
 
