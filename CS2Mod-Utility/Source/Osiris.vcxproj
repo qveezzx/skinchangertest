@@ -600,8 +600,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Platform\Windows\CRTWindows.cpp" />
-    <ClCompile Include="Features\SkinManager.cpp" />
-    <ClCompile Include="Features\SkinDatabase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="Platform\Windows\Syscalls\WindowsSyscall.asm" />
