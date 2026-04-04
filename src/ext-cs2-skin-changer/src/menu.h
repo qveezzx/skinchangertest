@@ -417,38 +417,14 @@ void RenderSettingsTab(float x, float y, float w, float h)
     }
     curY += 40;
 
-    // Themes
-    SC_GUI::DrawStringA("Themes", x + 20, curY, Color(255, 255, 255), SC_GUI::mainFont, false);
+    // Theme
+    SC_GUI::DrawStringA("Theme", x + 20, curY, Color(255, 255, 255), SC_GUI::mainFont, false);
     curY += 25;
-
-    if (SC_GUI::Button("theme_darkred", "Dark Red (Default)", x + 20, curY, 200, 30)) {
-        SC_GUI::currentTheme = {
-            Color(255, 12, 12, 12),
-            Color(255, 20, 20, 20),
-            Color(255, 30, 30, 30),
-            Color(255, 45, 45, 45),
-            Color(255, 40, 40, 40),
-            Color(255, 100, 100, 255),
-            Color(255, 255, 255, 255),
-            Color(255, 150, 150, 150) 
-        };
-    }
-    curY += 35;
-
-    if (SC_GUI::Button("theme_midblue", "Midnight Blue", x + 20, curY, 200, 30)) {
-        SC_GUI::currentTheme = {
-            Color(255, 15, 20, 30),
-            Color(255, 20, 25, 40),
-            Color(255, 40, 50, 70),
-            Color(255, 30, 40, 60),
-            Color(255, 30, 45, 65), // Separator
-            Color(255, 0, 120, 215), // Blue Accent
-            Color(255, 255, 255),
-            Color(255, 170, 180, 200)
-        };
-    }
+    SC_GUI::DrawStringA("BERSERK Dark Red (fixed)", x + 20, curY, SC_GUI::currentTheme.text, SC_GUI::mainFont, false);
+    curY += 30;
+    SC_GUI::DrawStringA("Theme selection is disabled. The menu uses a single dark red style.", x + 20, curY, SC_GUI::currentTheme.textDim, SC_GUI::smallFont, false);
     curY += 45;
-    
+
     // Config Section Header
     SC_GUI::DrawStringA("Configurations", x + 20, curY, Color(255, 100, 255, 100), SC_GUI::titleFont, false);
     curY += 40;
@@ -734,65 +710,51 @@ void RenderMenu()
     if (SC_GUI::Input.leftClick) {
         // Allow dragging entire top header
         if (SC_GUI::Input.mousePos.x >= x && SC_GUI::Input.mousePos.x <= x + w &&
-            SC_GUI::Input.mousePos.y >= y && SC_GUI::Input.mousePos.y <= y + 60) {
+            SC_GUI::Input.mousePos.y >= y && SC_GUI::Input.mousePos.y <= y + 80) {
             x += SC_GUI::Input.mouseDelta.x;
             y += SC_GUI::Input.mouseDelta.y;
         }
     }
 
-    // Styles from Theme
-    float sidebarW = 220.0f;
-    float headerH = 60.0f;
-    
     // Main Window Background
-    SC_GUI::DrawRoundedRect(x, y, w, h, 8, SC_GUI::currentTheme.mainBg);
-    
-    // Sidebar Background
-    SC_GUI::DrawRoundedRect(x, y, sidebarW, h, 8, SC_GUI::currentTheme.sidebarBg);
+    SC_GUI::DrawRoundedRect(x, y, w, h, 10, SC_GUI::currentTheme.mainBg);
+    SC_GUI::DrawStrokeRoundedRect(x, y, w, h, 10, SC_GUI::currentTheme.border, 1.0f);
 
-    // Vertical Separator
-    SC_GUI::DrawRect(x + sidebarW, y, 1, h, SC_GUI::currentTheme.separator);
+    // Header Background Gradient
+    float headerH = 160.0f;
+    SC_GUI::DrawGradientRoundedRect(x + 10, y + 10, w - 20, headerH, 10.0f,
+        Color(255, 35, 25, 25), Color(255, 18, 10, 12));
+    SC_GUI::DrawStrokeRoundedRect(x + 10, y + 10, w - 20, headerH, 10.0f, Color(255, 80, 80, 80), 1.0f);
 
-    // Window Border Outline
-    SC_GUI::DrawStrokeRoundedRect(x, y, w, h, 8, SC_GUI::currentTheme.border, 1.0f);
+    // Logo area
+    float logoSize = 42.0f;
+    SC_GUI::DrawRoundedRect(x + 24, y + 24, logoSize, logoSize, 10.0f, SC_GUI::currentTheme.accent);
+    SC_GUI::DrawStringA("B", x + 24 + logoSize/2, y + 24 + logoSize/2, Color(255,255,255,255), SC_GUI::titleFont, true);
+    SC_GUI::DrawStringA("BERSERK", x + 24 + logoSize + 16, y + 30, SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
+    SC_GUI::DrawStringA("Skinchanger", x + 24 + logoSize + 16, y + 64, SC_GUI::currentTheme.textDim, SC_GUI::mainFont, false);
 
-    // --- Header / Logo Area (Top Left) ---
-    // Dynamic Title
-    static std::vector<std::string> titles = {
-        "kami", "jeffrey", "azaki", "zotiq", "nir", 
-        "jerem", "lbs", "rayene", "sosko", "zoulouu"
-    };
-    static int titleIdx = 0;
-    static ULONGLONG lastChange = 0;
-    ULONGLONG now = GetTickCount64();
-    
-    if (now - lastChange > 3000) {
-        titleIdx = (titleIdx + 1) % titles.size();
-        lastChange = now;
-    }
+    // Top icon tabs row
+    float navY = y + 85;
+    float buttonSize = 58;
+    float buttonGap = 12;
+    float buttonsTotal = buttonSize * 5 + buttonGap * 4;
+    float startX = x + 20 + (w - 40 - buttonsTotal) / 2;
 
-    // Logo Text with Margin
-    SC_GUI::DrawStringA(titles[titleIdx], x + 30, y + 30, SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
-    
-    // --- Tabs (Sidebar) ---
-    float tabY = y + 120;
-    float tabH = 45;
-    float tabW = sidebarW - 20; // Padding
-    float tabX = x + 10;
+    if (SC_GUI::TabButton("tab_wep", "", startX + (buttonSize + buttonGap) * 0, navY, buttonSize, buttonSize, active_tab == 0, "weapons")) active_tab = 0;
+    if (SC_GUI::TabButton("tab_gloves", "", startX + (buttonSize + buttonGap) * 1, navY, buttonSize, buttonSize, active_tab == 4, "gloves")) active_tab = 4;
+    if (SC_GUI::TabButton("tab_music", "", startX + (buttonSize + buttonGap) * 2, navY, buttonSize, buttonSize, active_tab == 1, "musickit")) active_tab = 1;
+    if (SC_GUI::TabButton("tab_knives", "", startX + (buttonSize + buttonGap) * 3, navY, buttonSize, buttonSize, active_tab == 2, "knifes")) active_tab = 2;
+    if (SC_GUI::TabButton("tab_settings", "", startX + (buttonSize + buttonGap) * 4, navY, buttonSize, buttonSize, active_tab == 3, "settings")) active_tab = 3;
 
-    if (SC_GUI::TabButton("tab_wep", "Weapons", tabX, tabY, tabW, tabH, active_tab == 0)) active_tab = 0;
-    if (SC_GUI::TabButton("tab_knife", "Knives", tabX, tabY + 50, tabW, tabH, active_tab == 2)) active_tab = 2;
-    if (SC_GUI::TabButton("tab_gloves", "Gloves", tabX, tabY + 100, tabW, tabH, active_tab == 4)) active_tab = 4;
-    if (SC_GUI::TabButton("tab_music", "Music Kits", tabX, tabY + 150, tabW, tabH, active_tab == 1)) active_tab = 1;
-    if (SC_GUI::TabButton("tab_settings", "Settings", tabX, tabY + 200, tabW, tabH, active_tab == 3)) active_tab = 3;
+    // Single separator line under header
+    SC_GUI::DrawRect(x + 10, y + 10 + headerH, w - 20, 1, Color(255, 70, 70, 70));
 
-    // --- Content Area ---
-    float cX = x + sidebarW;
-    float cY = y;
-    float cW = w - sidebarW;
-    float cH = h;
+    // Content Area
+    float cX = x + 20;
+    float cY = y + 10 + headerH + 20;
+    float cW = w - 40;
+    float cH = h - (cY - y) - 20;
 
-    // Clip Content Area
     SC_GUI::SetClip(cX, cY, cW, cH);
     switch (active_tab) {
         case 0: RenderWeaponTab(cX, cY, cW, cH); break;

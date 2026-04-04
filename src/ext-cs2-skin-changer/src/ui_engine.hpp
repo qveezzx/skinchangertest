@@ -47,9 +47,9 @@ namespace SC_GUI {
         Color(255, 30, 30, 30),      // contentBg (Cards/Inputs)
         Color(255, 45, 45, 45),      // border
         Color(255, 40, 40, 40),      // separator
-        Color(255, 100, 100, 255),   // accent (Vibrant Blue/Purple default) - actually lets go Red as per user history, but modern: #FF4444
-        Color(255, 255, 255, 255),   // text
-        Color(255, 150, 150, 150)    // textDim
+        Color(255, 225, 70, 70),     // accent (Dark Red)
+        Color(255, 245, 245, 245),   // text
+        Color(255, 155, 155, 155)    // textDim
     };
 
     // Global Input State (Same as before)
@@ -227,6 +227,18 @@ namespace SC_GUI {
         gfx->FillRectangle(brush, (REAL)x, (REAL)y, (REAL)w, (REAL)h);
     }
 
+    inline void DrawGradientRoundedRect(float x, float y, float w, float h, float r, Color start, Color end) {
+        GraphicsPath path;
+        float d = r * 2;
+        path.AddArc((REAL)x, (REAL)y, (REAL)d, (REAL)d, 180.0f, 90.0f);
+        path.AddArc((REAL)(x + w - d), (REAL)y, (REAL)d, (REAL)d, 270.0f, 90.0f);
+        path.AddArc((REAL)(x + w - d), (REAL)(y + h - d), (REAL)d, (REAL)d, 0.0f, 90.0f);
+        path.AddArc((REAL)x, (REAL)(y + h - d), (REAL)d, (REAL)d, 90.0f, 90.0f);
+        path.CloseFigure();
+        LinearGradientBrush brushGrad(RectF((REAL)x, (REAL)y, (REAL)w, (REAL)h), start, end, LinearGradientModeVertical);
+        gfx->FillPath(&brushGrad, &path);
+    }
+
     // Widgets
     inline bool Button(const std::string& id, const std::string& text, float x, float y, float w, float h, bool selected = false) {
         bool hovered = (Input.mousePos.x >= x && Input.mousePos.x <= x + w && Input.mousePos.y >= y && Input.mousePos.y <= y + h);
@@ -313,6 +325,28 @@ namespace SC_GUI {
                     std::filesystem::remove_all(CACHE_DIR);
                 }
                 } catch (...) {}
+        }
+
+        Image* GetLocal(const std::string& key, const std::filesystem::path& filepath) {
+            {
+                std::shared_lock<std::shared_mutex> lock(cacheMutex);
+                auto it = cache.find(key);
+                if (it != cache.end()) {
+                    return it->second;
+                }
+            }
+
+            try {
+                if (std::filesystem::exists(filepath)) {
+                    Image* loaded = new Image(filepath.wstring().c_str());
+                    if (loaded && loaded->GetLastStatus() == Ok) {
+                        AddDirect(key, loaded);
+                        return loaded;
+                    }
+                    delete loaded;
+                }
+            } catch (...) {}
+            return nullptr;
         }
 
         Image* Get(const std::string& key, const std::string& url, bool diskEnabled) {
@@ -504,29 +538,53 @@ namespace SC_GUI {
         UpdateAnimation(id, (hovered || active) ? 1.0f : 0.0f, 0.2f);
         float anim = animations[id].value;
 
-        // Background (Subtle highlight)
-        if (anim > 0.01f) {
-            Color bg = Color((BYTE)(20 * anim), 255, 255, 255); // Very subtle white overlay
-            DrawFilledRoundedRect(x, y, w, h, 8.0f, bg);
-        }
+        // Base button style
+        Color base = currentTheme.contentBg;
+        Color hover = Color(255, 60, 60, 60);
+        Color activeBg = Color(255, 40, 40, 40);
+        Color bg = active ? activeBg : InterpColor(base, hover, anim);
+        DrawFilledRoundedRect(x, y, w, h, 8.0f, bg);
 
-        // Accent Indicator (Left Side Pill)
         if (active) {
-            DrawFilledRoundedRect(x, y + 8, 4, h - 16, 2.0f, currentTheme.accent);
+            DrawStrokeRoundedRect(x, y, w, h, 8.0f, currentTheme.accent, 1.5f);
         }
 
-        // Icon + Text
-        float contentX = x + 20;
-        // If we had icons, draw here.
-        
-        Color txtColor = InterpColor(currentTheme.textDim, currentTheme.text, active ? 1.0f : anim);
-        if (active) txtColor = currentTheme.accent; // Highlight text if active? Or just white? Let's go Accent.
+        // Icon only if provided
+        if (!icon.empty()) {
+            std::filesystem::path iconFile = std::filesystem::current_path() / "assets" / "icons" / (icon + ".svg");
+            Image* iconImg = TextureCache.GetLocal("icon_" + icon, iconFile);
+            if (!iconImg) {
+                // fallback to PNG naming if SVG not supported or missing
+                iconFile = std::filesystem::current_path() / "assets" / "icons" / (icon + ".png");
+                iconImg = TextureCache.GetLocal("icon_" + icon, iconFile);
+            }
 
-        // Use vCenterFormat
-        brush->SetColor(txtColor);
-        RectF layout((REAL)contentX, (REAL)y, (REAL)(w - 30), (REAL)h);
-        std::wstring wtext(text.begin(), text.end());
-        gfx->DrawString(wtext.c_str(), -1, largeFont, layout, vCenterFormat, brush);
+            float iconSize = 24.0f;
+            float iconX = x + (w - iconSize) * 0.5f;
+            float iconY = y + (h - iconSize) * 0.5f;
+
+            if (iconImg) {
+                gfx->DrawImage(iconImg, (REAL)iconX, (REAL)iconY, (REAL)iconSize, (REAL)iconSize);
+            } else {
+                Color iconBg = active ? currentTheme.accent : Color(255, 55, 55, 55);
+                DrawFilledRoundedRect(iconX, iconY, iconSize, iconSize, 6.0f, iconBg);
+                brush->SetColor(active ? Color(255, 255, 255, 255) : currentTheme.textDim);
+                std::wstring wicon(icon.begin(), icon.end());
+                if (wicon.size() > 1) wicon = wicon.substr(0, 1);
+                RectF layout((REAL)iconX, (REAL)iconY, (REAL)iconSize, (REAL)iconSize);
+                gfx->DrawString(wicon.c_str(), -1, largeFont, layout, centerFormat, brush);
+            }
+        }
+
+        // Text label only when present
+        if (!text.empty()) {
+            Color txtColor = InterpColor(currentTheme.textDim, currentTheme.text, active ? 1.0f : anim);
+            if (active) txtColor = currentTheme.accent;
+            brush->SetColor(txtColor);
+            RectF layout((REAL)x, (REAL)y, (REAL)w, (REAL)h);
+            std::wstring wtext(text.begin(), text.end());
+            gfx->DrawString(wtext.c_str(), -1, largeFont, layout, centerFormat, brush);
+        }
 
         return clicked;
     }
