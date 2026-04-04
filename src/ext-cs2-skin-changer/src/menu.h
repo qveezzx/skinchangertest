@@ -750,8 +750,7 @@ void RenderMenu()
     float logoSize = 42.0f;
     SC_GUI::DrawRoundedRect(x + 24, y + 24, logoSize, logoSize, 10.0f, SC_GUI::currentTheme.accent);
     SC_GUI::DrawStringA("B", x + 24 + logoSize/2, y + 24 + logoSize/2, Color(255,255,255,255), SC_GUI::titleFont, true);
-    SC_GUI::DrawStringA("ERSERK", x + 24 + logoSize + 6, y + 28, SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
-    SC_GUI::DrawStringA("Skinchanger", x + 24 + logoSize + 6, y + 58, SC_GUI::currentTheme.textDim, SC_GUI::mainFont, false);
+    SC_GUI::DrawStringA("ERSERK", x + 24 + logoSize + 2, y + 26, SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
 
     // Top icon tabs row
     float navY = y + 88;
