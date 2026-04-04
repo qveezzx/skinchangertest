@@ -52,38 +52,32 @@ void sd()
 
 int main()
 {
-    // Initialize menu and overlay first so loading screen shows
-    InitMenu();
+    std::cout << "SkinChanger Waiting for CS2...\n";
     
-    configManager->Setup();
-    
-    std::cout << "SkinChanger Initializing...\n";
-
-    // === PHASE 1: WAITING FOR CS2 ===
-    // Keep showing loading screen until CS2 is found
-    bool cs2Found = mem.IsConnected();
-    while (!cs2Found && !overlay::ShouldQuit)
+    // === PHASE 1: WAIT FOR CS2 PROCESS (blocking, before UI) ===
+    // Connect to CS2 before showing any UI
+    bool cs2Found = false;
+    while (!cs2Found)
     {
-        Sleep(500); // Check every 500ms
-        
-        // Render loading screen with phase
-        OnFrame();
-        
-        // Try to connect to CS2
-        if (!mem.IsConnected()) {
-            mem.TryReconnect(L"cs2.exe");
-        }
-        
         if (mem.IsConnected()) {
             cs2Found = true;
-            // Give CS2 ~1 second to fully initialize after connection
-            Sleep(1000);
+            std::cout << "CS2 Found! Initializing...\n";
+            Sleep(1000); // Give CS2 time to fully initialize
+            break;
         }
+        
+        // Try to reconnect
+        mem.TryReconnect(L"cs2.exe");
+        Sleep(500);
     }
+    
+    // === Now initialize menu after CS2 is confirmed ===
+    InitMenu();
+    configManager->Setup();
 
-    // === PHASE 2: CS2 FOUND - INDEXING SKINS (5+ second loading) ===
-    if (!overlay::ShouldQuit) {
-        std::cout << "CS2 Found! Indexing skins...\n";
+    // === PHASE 2: INDEXING SKINS (show loading screen for 5 seconds) ===
+    {
+        std::cout << "Indexing skins...\n";
         
         // Move to indexing phase
         currentPhase = PHASE_INDEXING_SKINS;
@@ -116,6 +110,12 @@ int main()
             const std::vector<uintptr_t> weapons = GetWeapons(localPlayer);
             std::cout << "Initial weapon list populated: " << weapons.size() << " weapons found\n";
         }
+    }
+    
+    // If overlay quit signal received, exit
+    if (overlay::ShouldQuit) {
+        std::cout << "Exiting...\n";
+        return 0;
     }
 
     // === PHASE 3: MAIN SKINCHANGER LOOP ===
@@ -178,13 +178,30 @@ int main()
 
             mem.Write<uint32_t>(weapon + Offsets::m_nFallbackPaintKit, skin.Paint);
             
-            // Also update weapon name with skin name
+            // Force update weapon name with skin name (clean up pipe character)
             const uintptr_t itemView = item; // item is C_EconItemView
             if (!skin.name.empty()) {
-                // Write skin name to weapon (max 160 chars for name override)
+                // Extract just the skin name part (after pipe if exists)
+                std::string cleanName = skin.name;
+                
+                // Remove " | " pattern and keep only the skin part
+                size_t pipePos = cleanName.find(" | ");
+                if (pipePos != std::string::npos) {
+                    cleanName = cleanName.substr(pipePos + 3); // Get everything after " | "
+                }
+                
+                // Write cleaned skin name to weapon (max 160 chars for name override)
                 char nameBuf[161] = {0};
-                strncpy_s(nameBuf, sizeof(nameBuf), skin.name.c_str(), _TRUNCATE);
+                strncpy_s(nameBuf, sizeof(nameBuf), cleanName.c_str(), _TRUNCATE);
+                
+                // Force name update by resetting item state flags
+                mem.Write<uint32_t>(itemView + Offsets::m_iItemIDHigh, -1);  // Reset item ID to force re-application
+                
+                // Write the name
                 WriteProcessMemory(mem.hProcess, reinterpret_cast<LPVOID>(itemView + Offsets::m_szCustomNameOverride), nameBuf, sizeof(nameBuf), nullptr);
+                
+                // Force re-rendering by invalidating item cache
+                econItemAttributeManager.Remove(item);
             }
 
             const uint64_t mask = skin.bUsesOldModel + 1;

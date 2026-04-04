@@ -19,7 +19,7 @@ enum LoadingPhase {
     PHASE_MAIN_MENU         // Main menu ready
 };
 
-static LoadingPhase currentPhase = PHASE_WAITING_CS2;
+static LoadingPhase currentPhase = PHASE_INDEXING_SKINS;  // Start with indexing since CS2 is already detected
 static ULONGLONG indexingStartTime = 0;
 static const ULONGLONG INDEXING_DURATION = 5000; // 5 seconds
 
