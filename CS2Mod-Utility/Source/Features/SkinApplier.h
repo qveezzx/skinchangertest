@@ -32,19 +32,41 @@ private:
         if (!playerPawn)
             return;
 
-        applyPaintKit(playerPawn.getActiveWeapon());
+        // Get weapons container from player
+        auto weaponServices = playerPawn.weaponServices();
+        if (!weaponServices)
+            return;
+
+        // Get all weapons and iterate
+        auto weapons = weaponServices.weapons();
+        
+        // Use forEach to apply skins to each weapon
+        weapons.forEach([this](auto&& weaponEntity) {
+            this->applyPaintKitToWeapon(weaponEntity);
+        });
     }
 
-    void applyPaintKit(auto&& weapon) noexcept
+    void applyPaintKitToWeapon(auto&& weaponEntity) noexcept
     {
-        auto weaponPtr = static_cast<cs2::C_BaseEntity*>(weapon.baseEntity());
+        // Get raw weapon pointer from base entity
+        auto weaponPtr = static_cast<cs2::C_BaseEntity*>(weaponEntity);
         if (!weaponPtr)
             return;
 
         auto weaponAddr = reinterpret_cast<std::uintptr_t>(weaponPtr);
+
+        // Step 1: Set m_iItemIDHigh to -1 to trigger item resync
+        // m_AttributeManager is at 0x1090 within the weapon
+        // m_iItemIDHigh is at 0x1D0 within the item/attribute manager
+        auto itemAddr = weaponAddr + 0x1090;  // m_AttributeManager offset
+        auto itemIDHighPtr = reinterpret_cast<std::uint32_t*>(itemAddr + 0x1D0);
+        if (itemIDHighPtr)
+            *itemIDHighPtr = 0xFFFFFFFFu;  // Set to -1
+
+        // Step 2: Write paint kit to m_nFallbackPaintKit (offset 0x1540)
         auto paintKitPtr = reinterpret_cast<std::uint32_t*>(weaponAddr + 0x1540);
         if (paintKitPtr)
-            *paintKitPtr = 0u;
+            *paintKitPtr = 1u;  // Apply skin with paint kit ID 1
     }
 };
 
