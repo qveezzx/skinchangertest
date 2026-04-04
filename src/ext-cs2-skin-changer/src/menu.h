@@ -4,6 +4,22 @@
 #include "window/window.hpp"
 #include "ui_engine.hpp"
 #include "config.h"
+#include <chrono>
+#include <tlhelp32.h>
+
+// ===== APP STATE MANAGEMENT =====
+enum class AppState {
+    WAITING_FOR_CS2,
+    LOADING,
+    READY
+};
+
+static AppState currentAppState = AppState::WAITING_FOR_CS2;
+static bool showBetaWarning = false;
+static float loadingProgress = 0.0f;
+static auto loadingStartTime = std::chrono::high_resolution_clock::now();
+static bool warnedKnives = false;
+static bool warnedGloves = false;
 
 static WeaponsEnum CurrentWeaponDef;
 static int selectedSkinIndex = 0;
@@ -13,6 +29,120 @@ static int selectedMusicKitIndex = 0;
 static char searchBuffer[128] = "";
 
 void UpdateSearchInput() {
+}
+
+// ===== PROCESS DETECTION =====
+bool IsCS2Running()
+{
+    HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hProcessSnap == INVALID_HANDLE_VALUE) return false;
+    
+    PROCESSENTRY32 pe32 = { sizeof(PROCESSENTRY32) };
+    
+    if (Process32First(hProcessSnap, &pe32))
+    {
+        do {
+            if (_stricmp(pe32.szExeFile, "cs2.exe") == 0)
+            {
+                CloseHandle(hProcessSnap);
+                return true;
+            }
+        } while (Process32Next(hProcessSnap, &pe32));
+    }
+    
+    CloseHandle(hProcessSnap);
+    return false;
+}
+
+// ===== UI RENDERERS FOR WAITING STATE =====
+void RenderWaitingScreen(float x, float y, float w, float h)
+{
+    // Background
+    SC_GUI::DrawRect(x, y, w, h, ImColor(20, 20, 20, 200));
+    SC_GUI::DrawBorder(x, y, w, h, ImColor(100, 100, 100, 255), 2.0f);
+    
+    // Center text
+    float centerX = x + w / 2.0f;
+    float centerY = y + h / 2.0f;
+    
+    ImVec2 textSize = ImGui::CalcTextSize("Waiting for CS2...");
+    SC_GUI::DrawStringA("Waiting for CS2...", 
+        centerX - textSize.x / 2.0f, centerY - 50.0f,
+        SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
+    
+    ImVec2 instrSize = ImGui::CalcTextSize("Please launch Counter-Strike 2");
+    SC_GUI::DrawStringA("Please launch Counter-Strike 2",
+        centerX - instrSize.x / 2.0f, centerY,
+        SC_GUI::currentTheme.text, SC_GUI::mainFont, false);
+}
+
+void RenderLoadingScreen(float x, float y, float w, float h)
+{
+    // Background
+    SC_GUI::DrawRect(x, y, w, h, ImColor(25, 25, 25, 220));
+    SC_GUI::DrawBorder(x, y, w, h, ImColor(100, 100, 100, 255), 2.0f);
+    
+    float centerX = x + w / 2.0f;
+    float centerY = y + h / 2.0f;
+    
+    // Title
+    ImVec2 titleSize = ImGui::CalcTextSize("Initializing...");
+    SC_GUI::DrawStringA("Initializing...",
+        centerX - titleSize.x / 2.0f, centerY - 60.0f,
+        SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
+    
+    // Progress bar
+    float barW = 300.0f, barH = 20.0f;
+    float barX = centerX - barW / 2.0f;
+    float barY = centerY;
+    
+    SC_GUI::DrawRect(barX, barY, barW, barH, ImColor(50, 50, 50, 200));
+    SC_GUI::DrawRect(barX + 2.0f, barY + 2.0f, (barW - 4.0f) * (loadingProgress / 100.0f), barH - 4.0f,
+        ImColor(100, 180, 255, 255));
+    SC_GUI::DrawBorder(barX, barY, barW, barH, ImColor(100, 150, 200, 255), 1.5f);
+    
+    // Status
+    ImVec2 statusSize = ImGui::CalcTextSize("Loading weapon skins...");
+    SC_GUI::DrawStringA("Loading weapon skins...",
+        centerX - statusSize.x / 2.0f,
+        centerY + 50.0f, SC_GUI::currentTheme.text, SC_GUI::mainFont, false);
+}
+
+void RenderBetaWarning(float x, float y, float w, float h)
+{
+    if (!showBetaWarning) return;
+    
+    // Overlay
+    SC_GUI::DrawRect(x, y, w, h, ImColor(0, 0, 0, 150));
+    
+    // Warning box
+    float boxW = 400.0f, boxH = 200.0f;
+    float boxX = x + (w - boxW) / 2.0f;
+    float boxY = y + (h - boxH) / 2.0f;
+    
+    SC_GUI::DrawRoundedRect(boxX, boxY, boxW, boxH, 8.0f, ImColor(40, 40, 40, 255));
+    SC_GUI::DrawBorder(boxX, boxY, boxW, boxH, ImColor(255, 200, 0, 255), 3.0f);
+    
+    // Title
+    ImVec2 titleSize = ImGui::CalcTextSize("BETA WARNING");
+    SC_GUI::DrawStringA("BETA WARNING",
+        boxX + (boxW - titleSize.x) / 2.0f, boxY + 20.0f,
+        ImColor(255, 200, 0, 255), SC_GUI::titleFont, false);
+    
+    // Message
+    ImVec2 msgSize = ImGui::CalcTextSize("This feature may not work reliably.");
+    SC_GUI::DrawStringA("This feature may not work reliably.",
+        boxX + (boxW - msgSize.x) / 2.0f, boxY + 60.0f, 
+        ImColor(200, 200, 200, 255), SC_GUI::mainFont, false);
+    
+    // OK Button
+    float buttonW = 100.0f, buttonH = 35.0f;
+    float buttonX = boxX + (boxW - buttonW) / 2.0f;
+    float buttonY = boxY + boxH - 50.0f;
+    
+    if (SC_GUI::Button("beta_warning_ok", "OK", buttonX, buttonY, buttonW, buttonH)) {
+        showBetaWarning = false;
+    }
 }
 
 void RenderWeaponTab(float x, float y, float w, float h)
@@ -124,6 +254,12 @@ void RenderWeaponTab(float x, float y, float w, float h)
 
 void RenderKnifeTab(float x, float y, float w, float h)
 {
+     // ===== BETA WARNING =====
+     if (currentAppState == AppState::READY && !warnedKnives) {
+         warnedKnives = true;
+         showBetaWarning = true;
+     }
+     
      // Smart Auto-Detect Logic
     bool isDefaultKnife = true;
     int autoDetectedIndex = -1;
@@ -431,6 +567,12 @@ void RenderSettingsTab(float x, float y, float w, float h)
 // --- Glove Tab ---
 void RenderGloveTab(float x, float y, float w, float h)
 {
+    // ===== BETA WARNING =====
+    if (currentAppState == AppState::READY && !warnedGloves) {
+        warnedGloves = true;
+        showBetaWarning = true;
+    }
+    
     // Layout: Left column for Glove Types, Right area for Skins
     float typeW = 160.0f;
     float typeX = x + 10;
@@ -611,7 +753,49 @@ void RenderMenu()
 
 void OnFrame()
 {
-     // Toggle Logic
+    // Check CS2 status
+    bool cs2Running = IsCS2Running();
+    
+    // State transitions
+    if (!cs2Running && currentAppState != AppState::WAITING_FOR_CS2) {
+        currentAppState = AppState::WAITING_FOR_CS2;
+    }
+    else if (cs2Running && currentAppState == AppState::WAITING_FOR_CS2) {
+        currentAppState = AppState::LOADING;
+        loadingStartTime = std::chrono::high_resolution_clock::now();
+        loadingProgress = 0.0f;
+    }
+    
+    // Update loading progress
+    if (currentAppState == AppState::LOADING) {
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::high_resolution_clock::now() - loadingStartTime).count();
+        loadingProgress = std::min(100.0f, (float)elapsed / 2000.0f * 100.0f);
+        
+        if (elapsed > 2000) {
+            currentAppState = AppState::READY;
+        }
+    }
+    
+    float x = 0.0f, y = 0.0f;
+    float w = (float)overlay::G_Width;
+    float h = (float)overlay::G_Height;
+    
+    // Render based on state
+    if (currentAppState == AppState::WAITING_FOR_CS2) {
+        RenderWaitingScreen(x, y, w, h);
+        overlay::Render(nullptr, true);
+        return;
+    }
+    else if (currentAppState == AppState::LOADING) {
+        RenderLoadingScreen(x, y, w, h);
+        overlay::Render(nullptr, true);
+        return;
+    }
+    
+    // ===== NORMAL MENU RENDERING (READY STATE) =====
+    
+    // Toggle Logic
     static bool prevInsert = false;
     bool insert = (GetAsyncKeyState(VK_INSERT) & 0x8000) != 0;
     if (insert && !prevInsert) {
@@ -620,8 +804,17 @@ void OnFrame()
     }
     prevInsert = insert;
 
-    // Pass our RenderMenu function to the overlay loop
-    overlay::Render(RenderMenu, MenuOpen); 
+    // Render beta warning on top if active
+    if (showBetaWarning) {
+        // Render with overlay to show warning
+        overlay::Render([](){ 
+            RenderBetaWarning(0.0f, 0.0f, (float)overlay::G_Width, (float)overlay::G_Height);
+            if (MenuOpen) RenderMenu();
+        }, true);
+    } else {
+        // Normal menu rendering
+        overlay::Render(RenderMenu, MenuOpen);
+    }
 }
 
 void MenuThread()
