@@ -11,7 +11,7 @@ menu.h(120,13): C2039 - DrawBorder doesn't exist in SC_GUI
 menu.h(772,32): C2589 - Syntax error (was a false alarm - syntax correct)
 ```
 
-## What Was Fixed (5 Changes)
+## What Was Fixed (7 Changes Total)
 
 ### Change 1: Line 45 - Process Detection
 ```cpp
@@ -41,6 +41,20 @@ AFTER:  SC_GUI::DrawStrokeRoundedRect(barX, barY, barW, barH, 0.0f, Color(100, 1
 ```cpp
 BEFORE: SC_GUI::DrawBorder(boxX, boxY, boxW, boxH, Color(255, 200, 0, 255), 3.0f);
 AFTER:  SC_GUI::DrawStrokeRoundedRect(boxX, boxY, boxW, boxH, 8.0f, Color(255, 200, 0, 255), 3.0f);
+```
+
+### Change 6: Line 749 - Beta Warning Function Call (Cast Fix)
+```cpp
+BEFORE: RenderBetaWarning(0.0f, 0.0f, (float)overlay::G_Width, (float)overlay::G_Height);
+AFTER:  RenderBetaWarning(0.0f, 0.0f, static_cast<float>(overlay::G_Width), static_cast<float>(overlay::G_Height));
+```
+
+### Change 7: Lines 780-781 - Screen Dimension Casts (Cast Fix)
+```cpp
+BEFORE: float w = (float)overlay::G_Width;
+        float h = (float)overlay::G_Height;
+AFTER:  float w = static_cast<float>(overlay::G_Width);
+        float h = static_cast<float>(overlay::G_Height);
 ```
 
 ## The Root Causes

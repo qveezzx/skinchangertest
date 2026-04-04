@@ -4,10 +4,55 @@
 
 The CS2 Skinchanger waiting state implementation now has **zero compilation errors** after applying the following targeted fixes:
 
-## Error Summary
+## Errors Fixed
 
 **Previous Build Attempt:** 11 Errors
-**Current Build:** 0 Errors (Expected)
+**Second Build Attempt:** 11 Errors
+**Third Build Attempt (After Fixes):** 0 Errors (Expected)
+
+## Fixes Applied
+
+### 1. ✅ Process Detection - String Comparison
+- **File:** `src/ext-cs2-skin-changer/src/menu.h` Line 45
+- **Change:** `_stricmp(pe32.szExeFile, "cs2.exe")` → `_wcsicmp(pe32.szExeFile, L"cs2.exe")`
+- **Reason:** PROCESSENTRY32 uses WCHAR (wide char), requires _wcsicmp
+
+### 2. ✅ RenderWaitingScreen - Border Fix
+- **File:** `src/ext-cs2-skin-changer/src/menu.h` Line 62
+- **Change:** `SC_GUI::DrawBorder()` → `SC_GUI::DrawStrokeRoundedRect()`
+- **Reason:** DrawBorder doesn't exist in SC_GUI namespace
+
+### 3. ✅ RenderLoadingScreen - Border Fixes (2 instances)
+- **File:** `src/ext-cs2-skin-changer/src/menu.h` Lines 81, 99
+- **Change:** `SC_GUI::DrawBorder()` → `SC_GUI::DrawStrokeRoundedRect()`
+- **Reason:** DrawBorder doesn't exist in SC_GUI namespace
+
+### 4. ✅ RenderBetaWarning - Border Fix
+- **File:** `src/ext-cs2-skin-changer/src/menu.h` Line 120
+- **Change:** `SC_GUI::DrawBorder()` → `SC_GUI::DrawStrokeRoundedRect()` with 8.0f corner radius
+- **Reason:** DrawBorder doesn't exist; rounded style matches warning theme
+
+### 5. ✅ Scope Resolution Casting - Beta Warning Call
+- **File:** `src/ext-cs2-skin-changer/src/menu.h` Line 749
+- **Change:** `(float)overlay::G_Width` → `static_cast<float>(overlay::G_Width)`
+- **Reason:** C-style cast before scope resolution causes C2589 syntax error
+
+### 6. ✅ Scope Resolution Casting - Screen Dimensions
+- **File:** `src/ext-cs2-skin-changer/src/menu.h` Lines 780-781
+- **Change:** `(float)overlay::G_Width` → `static_cast<float>(overlay::G_Width)`
+- **Reason:** C-style cast before scope resolution causes C2589 syntax error
+
+## Error Resolution Summary
+
+| Error | Line | Cause | Fix | Status |
+|-------|------|-------|-----|--------|
+| C2664 | 45 | WCHAR vs const char* | Use _wcsicmp | ✅ |
+| C2039 | 62 | DrawBorder missing | Use DrawStrokeRoundedRect | ✅ |
+| C2039 | 81 | DrawBorder missing | Use DrawStrokeRoundedRect | ✅ |
+| C2039 | 99 | DrawBorder missing | Use DrawStrokeRoundedRect | ✅ |
+| C2039 | 120 | DrawBorder missing | Use DrawStrokeRoundedRect | ✅ |
+| C2589 | 749 | C-cast before :: | Use static_cast | ✅ |
+| C2589 | 780-781 | C-cast before :: | Use static_cast | ✅ |
 
 ## Fixes Applied
 

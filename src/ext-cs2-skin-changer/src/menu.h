@@ -746,7 +746,7 @@ void RenderMenu()
     
     // Render beta warning modal if active
     if (showBetaWarning) {
-        RenderBetaWarning(0.0f, 0.0f, (float)overlay::G_Width, (float)overlay::G_Height);
+        RenderBetaWarning(0.0f, 0.0f, static_cast<float>(overlay::G_Width), static_cast<float>(overlay::G_Height));
     }
 }
 
@@ -777,8 +777,8 @@ void OnFrame()
     }
     
     float x = 0.0f, y = 0.0f;
-    float w = (float)overlay::G_Width;
-    float h = (float)overlay::G_Height;
+    float w = static_cast<float>(overlay::G_Width);
+    float h = static_cast<float>(overlay::G_Height);
     
     // Render based on state
     if (currentAppState == AppState::WAITING_FOR_CS2) {
