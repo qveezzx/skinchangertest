@@ -88,7 +88,7 @@ int main()
         indexingStartTime = GetTickCount64();
         
         // Initialize the skin changer data during this phase (while loading screen is showing)
-        mem.Write<uint16_t>(Sigs::RegenerateWeaponSkins + 0x52, Offsets::m_AttributeManager + Offsets::m_Item + Offsets::m_AttributeList + Offsets::m_Attributes);
+        mem.Write<uint16_t>(Sigs::RegenerateWeaponSkins + 0x52, (uint16_t)(Offsets::m_AttributeManager + Offsets::m_Item + Offsets::m_AttributeList + Offsets::m_Attributes));
 
         skindb->Dump();
         Updater::UpdateOffsets();

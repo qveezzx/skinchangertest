@@ -12,6 +12,21 @@ static int selectedKnifeSkinIndex = 0;
 static int selectedMusicKitIndex = 0;
 static char searchBuffer[128] = "";
 
+// === STATE MANAGEMENT ===
+enum LoadingPhase {
+    PHASE_WAITING_CS2,      // Waiting for CS2 to launch (static)
+    PHASE_INDEXING_SKINS,   // CS2 detected, indexing skins (5 second loading)
+    PHASE_MAIN_MENU         // Main menu ready
+};
+
+static LoadingPhase currentPhase = PHASE_WAITING_CS2;
+static ULONGLONG indexingStartTime = 0;
+static const ULONGLONG INDEXING_DURATION = 5000; // 5 seconds
+
+// Skin change loading state
+static bool isChangingSkin = false;
+static ULONGLONG skinChangeStartTime = 0;
+
 void UpdateSearchInput() {
 }
 
@@ -531,21 +546,6 @@ static int active_tab = 0;
 bool MenuOpen = true;
 bool CS2Connected = false;
 
-// === STATE MANAGEMENT ===
-enum LoadingPhase {
-    PHASE_WAITING_CS2,      // Waiting for CS2 to launch (static)
-    PHASE_INDEXING_SKINS,   // CS2 detected, indexing skins (5 second loading)
-    PHASE_MAIN_MENU         // Main menu ready
-};
-
-static LoadingPhase currentPhase = PHASE_WAITING_CS2;
-static ULONGLONG indexingStartTime = 0;
-static const ULONGLONG INDEXING_DURATION = 5000; // 5 seconds
-
-// Skin change loading state
-static bool isChangingSkin = false;
-static ULONGLONG skinChangeStartTime = 0;
-
 // === LOADING SCREENS ===
 
 // Static waiting for CS2 screen (no animation)
@@ -661,7 +661,7 @@ void RenderSkinChangeLoadingBox()
     float y = (overlay::G_Height - h) / 2;
 
     // Backdrop (semi-transparent overlay)
-    SC_GUI::DrawRect(0, 0, overlay::G_Width, overlay::G_Height, Color(255, 0, 0, 100));
+    SC_GUI::DrawRect(0, 0, (float)overlay::G_Width, (float)overlay::G_Height, Color(255, 0, 0, 100));
 
     // Message box Background
     SC_GUI::DrawRoundedRect(x, y, w, h, 12, SC_GUI::currentTheme.mainBg);
