@@ -4,8 +4,70 @@
 #include "window/window.hpp"
 #include "ui_engine.hpp"
 #include "config.h"
+#include <curl/curl.h>
 
 static WeaponsEnum CurrentWeaponDef;
+
+// === UPDATE STATUS ===
+static std::string updateStatus = "CHECKING"; // CHECKING, UPDATED, OUTDATED
+static ULONGLONG lastUpdateCheck = 0;
+static const ULONGLONG UPDATE_CHECK_INTERVAL = 60000; // Check every 60 seconds
+
+static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+    size_t realsize = size * nmemb;
+    ((std::string*)userp)->append((char*)contents, realsize);
+    return realsize;
+}
+
+void CheckForUpdates() {
+    ULONGLONG now = GetTickCount64();
+    if (now - lastUpdateCheck < UPDATE_CHECK_INTERVAL) return;
+    lastUpdateCheck = now;
+
+    std::thread([]() {
+        CURL* curl = curl_easy_init();
+        if (!curl) return;
+
+        std::string response;
+        struct curl_slist* headers = NULL;
+        headers = curl_slist_append(headers, "Cache-Control: no-cache");
+        headers = curl_slist_append(headers, "Pragma: no-cache");
+
+        curl_easy_setopt(curl, CURLOPT_URL, "https://raw.githubusercontent.com/qveezzx/skinchangertest/refs/heads/main/isupdated");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
+
+        CURLcode res = curl_easy_perform(curl);
+
+        if (res == CURLE_OK && !response.empty()) {
+            // Get first line only
+            size_t newlinePos = response.find('\n');
+            std::string firstLine = (newlinePos != std::string::npos)
+                ? response.substr(0, newlinePos)
+                : response;
+
+            // Trim whitespace
+            firstLine.erase(0, firstLine.find_first_not_of(" \t\r\n"));
+            firstLine.erase(firstLine.find_last_not_of(" \t\r\n") + 1);
+
+            // Convert to uppercase for comparison
+            std::string upperLine = firstLine;
+            std::transform(upperLine.begin(), upperLine.end(), upperLine.begin(), ::toupper);
+
+            if (upperLine.find("UPDATED") != std::string::npos) {
+                updateStatus = "UPDATED";
+            } else if (upperLine.find("OUTDATED") != std::string::npos) {
+                updateStatus = "OUTDATED";
+            }
+        }
+
+        curl_slist_free_all(headers);
+        curl_easy_cleanup(curl);
+    }).detach();
+}
 static int selectedSkinIndex = 0;
 static int selectedKnifeIndex = 0;
 static int selectedKnifeSkinIndex = 0;
@@ -641,8 +703,8 @@ void RenderSkinChangeLoadingBox()
     float x = menuX + (menuW - w) / 2;
     float y = menuY + (menuH - h) / 2;
 
-    // Semi-transparent backdrop ONLY over the menu area
-    SC_GUI::DrawRect(menuX, menuY, menuW, menuH, Color(255, 0, 0, 100));
+    // Semi-transparent dark backdrop ONLY over the menu area
+    SC_GUI::DrawRect(menuX, menuY, menuW, menuH, Color(128, 12, 12, 12));
 
     // Message box Background
     SC_GUI::DrawRoundedRect(x, y, w, h, 12, SC_GUI::currentTheme.mainBg);
@@ -749,12 +811,12 @@ void RenderMenu()
     // Logo area
     float logoSize = 42.0f;
     SC_GUI::DrawRoundedRect(x + 24, y + 24, logoSize, logoSize, 10.0f, SC_GUI::currentTheme.accent);
-    SC_GUI::DrawStringA("R", x + 24 + logoSize/2, y + 24 + logoSize/2, Color(255,255,255,255), SC_GUI::titleFont, true);
-    SC_GUI::DrawStringA("ETARD", x + 24 + logoSize + 2, y + 26, SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
+    SC_GUI::DrawStringA("B", x + 24 + logoSize/2, y + 24 + logoSize/2, Color(255,255,255,255), SC_GUI::titleFont, true);
+    SC_GUI::DrawStringA("ERSERK", x + 24 + logoSize + 2, y + 26, SC_GUI::currentTheme.text, SC_GUI::titleFont, false);
 
     // Top icon tabs row
-    float navY = y + 88;
-    float buttonSize = 36;
+    float navY = y + 105;
+    float buttonSize = 38;
     float buttonGap = 10;
     float buttonsTotal = buttonSize * 5 + buttonGap * 4;
     float startX = x + 20 + (w - 40 - buttonsTotal) / 2;
@@ -766,7 +828,7 @@ void RenderMenu()
     if (SC_GUI::TabButton("tab_settings", "", startX + (buttonSize + buttonGap) * 4, navY, buttonSize, buttonSize, active_tab == 3, "settings")) active_tab = 3;
 
     // Single separator line under header
-    SC_GUI::DrawRect(x + 10, y + 10 + headerH + 20, w - 20, 1, Color(255, 70, 70, 70));
+    SC_GUI::DrawRect(x + 10, y + 155, w - 20, 1, Color(255, 70, 70, 70));
 
     // Content Area
     float cX = x + 20;
@@ -785,8 +847,36 @@ void RenderMenu()
     SC_GUI::ResetClip();
 }
 
+void RenderUpdateStatusLabel(float menuX, float menuY, float menuW, float menuH)
+{
+    // Small label in bottom-right corner
+    float labelW = 80;
+    float labelH = 22;
+    float padding = 10;
+    float labelX = menuX + menuW - labelW - padding;
+    float labelY = menuY + menuH - labelH - padding;
+
+    Color labelColor = (updateStatus == "UPDATED")
+        ? Color(255, 70, 200, 70)   // Green for UPDATED
+        : (updateStatus == "OUTDATED"
+            ? Color(255, 200, 70, 70)  // Red for OUTDATED
+            : Color(255, 150, 150, 150)); // Grey for CHECKING
+
+    // Background
+    SC_GUI::DrawFilledRoundedRect(labelX, labelY, labelW, labelH, 4.0f, Color(180, 20, 20, 20));
+
+    // Border
+    SC_GUI::DrawStrokeRoundedRect(labelX, labelY, labelW, labelH, 4.0f, labelColor, 1.0f);
+
+    // Text
+    SC_GUI::DrawStringA(updateStatus, labelX + labelW/2, labelY + labelH/2, labelColor, SC_GUI::smallFont, true);
+}
+
 void OnFrame()
 {
+    // Check for updates periodically
+    CheckForUpdates();
+
     // Handle skin change loading timeout (2 seconds)
     if (isChangingSkin) {
         ULONGLONG elapsed = GetTickCount64() - skinChangeStartTime;
@@ -816,7 +906,10 @@ void OnFrame()
     } else {
         // Phase is PHASE_MAIN_MENU - show main menu
         overlay::Render(RenderMenu, MenuOpen);
-        
+
+        // Render update status label (visible in all tabs)
+        RenderUpdateStatusLabel(menuX, menuY, menuW, menuH);
+
         // Render skin change loading box on top if needed
         if (isChangingSkin) {
             overlay::Render(RenderSkinChangeLoadingBox, true);

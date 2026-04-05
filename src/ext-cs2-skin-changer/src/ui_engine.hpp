@@ -28,6 +28,56 @@ namespace SC_GUI {
     };
 
     inline std::map<std::string, AnimState> animations;
+
+    // Resource-based icon cache
+    inline std::map<std::string, Image*> iconCache;
+
+    inline Image* GetIconFromResource(const std::string& iconName) {
+        // Check cache first
+        auto it = iconCache.find(iconName);
+        if (it != iconCache.end()) {
+            return it->second;
+        }
+
+        // Map icon names to resource IDs
+        int resourceId = 0;
+        if (iconName == "weapons") resourceId = 101;
+        else if (iconName == "gloves") resourceId = 102;
+        else if (iconName == "musickit") resourceId = 103;
+        else if (iconName == "knifes") resourceId = 104;
+        else if (iconName == "settings") resourceId = 105;
+
+        if (resourceId == 0) return nullptr;
+
+        // Load resource from executable
+        HRSRC hResource = FindResource(NULL, MAKEINTRESOURCE(resourceId), RT_RCDATA);
+        if (!hResource) return nullptr;
+
+        HGLOBAL hLoadedResource = LoadResource(NULL, hResource);
+        if (!hLoadedResource) return nullptr;
+
+        LPVOID pResourceData = LockResource(hLoadedResource);
+        DWORD resourceSize = SizeofResource(NULL, hResource);
+
+        // Create stream from resource
+        IStream* pStream = NULL;
+        if (CreateStreamOnHGlobal(NULL, TRUE, &pStream) != S_OK) return nullptr;
+
+        pStream->Write(pResourceData, resourceSize, NULL);
+        pStream->Seek({0}, STREAM_SEEK_SET, NULL);
+
+        // Create image from stream
+        Image* pImg = Image::FromStream(pStream);
+        pStream->Release();
+
+        if (pImg && pImg->GetLastStatus() == Ok) {
+            iconCache[iconName] = pImg;
+            return pImg;
+        }
+
+        delete pImg;
+        return nullptr;
+    }
     
     // Theme Support
     struct Theme {
@@ -549,23 +599,18 @@ namespace SC_GUI {
             DrawStrokeRoundedRect(x, y, w, h, 8.0f, currentTheme.accent, 1.5f);
         }
 
-        // Icon only if provided
+        // Icon only if provided - load from embedded resources
         if (!icon.empty()) {
-            std::filesystem::path iconFile = std::filesystem::current_path() / "assets" / "icons" / (icon + ".svg");
-            Image* iconImg = TextureCache.GetLocal("icon_" + icon, iconFile);
-            if (!iconImg) {
-                // fallback to PNG naming if SVG not supported or missing
-                iconFile = std::filesystem::current_path() / "assets" / "icons" / (icon + ".png");
-                iconImg = TextureCache.GetLocal("icon_" + icon, iconFile);
-            }
-
             float iconSize = 24.0f;
             float iconX = x + (w - iconSize) * 0.5f;
             float iconY = y + (h - iconSize) * 0.5f;
 
+            Image* iconImg = GetIconFromResource(icon);
+
             if (iconImg) {
                 gfx->DrawImage(iconImg, (REAL)iconX, (REAL)iconY, (REAL)iconSize, (REAL)iconSize);
             } else {
+                // Fallback if resource not found
                 Color iconBg = active ? currentTheme.accent : Color(255, 55, 55, 55);
                 DrawFilledRoundedRect(iconX, iconY, iconSize, iconSize, 6.0f, iconBg);
                 brush->SetColor(active ? Color(255, 255, 255, 255) : currentTheme.textDim);

@@ -1,0 +1,7 @@
+#include "resource.h"
+
+IDB_ICON_WEAPONS    RCDATA "src/assets/icons/icon_weapons.png"
+IDB_ICON_GLOVES     RCDATA "src/assets/icons/icon_gloves.png"
+IDB_ICON_MUSICKIT   RCDATA "src/assets/icons/icon_musickit.png"
+IDB_ICON_KNIFES     RCDATA "src/assets/icons/icon_knifes.png"
+IDB_ICON_SETTINGS   RCDATA "src/assets/icons/icon_settings.png"
