@@ -130,7 +130,8 @@ namespace SC_GUI {
     prevLeftClick = leftClick;
     leftClick = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
     leftClicked = leftClick && !prevLeftClick;
-    }
+        }
+    } Input;
 
     // GDI+ Globals
     inline ULONG_PTR gdiplusToken;
