@@ -10,6 +10,7 @@ static WeaponsEnum CurrentWeaponDef;
 
 // === UPDATE STATUS ===
 static std::string updateStatus = "CHECKING"; // CHECKING, UPDATED, OUTDATED
+static std::mutex updateStatusMutex;
 static ULONGLONG lastUpdateCheck = 0;
 static const ULONGLONG UPDATE_CHECK_INTERVAL = 60000; // Check every 60 seconds
 
@@ -55,6 +56,7 @@ void CheckForUpdates() {
             std::string upperLine = firstLine;
             std::transform(upperLine.begin(), upperLine.end(), upperLine.begin(), ::toupper);
 
+            std::lock_guard<std::mutex> lock(updateStatusMutex);
             if (upperLine.find("UPDATED") != std::string::npos) {
                 updateStatus = "UPDATED";
             } else if (upperLine.find("OUTDATED") != std::string::npos) {
@@ -489,6 +491,7 @@ void RenderSettingsTab(float x, float y, float w, float h)
     curY += 40;
 
     RenderConfigTab(x, curY, w, h - (curY - y));
+    RenderConfigTab(x, curY, w, h - (curY - y));
 }
 
 // --- Glove Tab ---
@@ -842,10 +845,24 @@ void RenderMenu()
         case 4: RenderGloveTab(cX, cY, cW, cH); break;
     }
     SC_GUI::ResetClip();
+
+    // Render update status label (visible in all tabs)
+    RenderUpdateStatusLabel(x, y, w, h);
+
+    // Render skin change loading box on top if needed
+    if (isChangingSkin) {
+        RenderSkinChangeLoadingBox();
+    }
 }
 
 void RenderUpdateStatusLabel(float menuX, float menuY, float menuW, float menuH)
 {
+    std::string currentStatus;
+    {
+        std::lock_guard<std::mutex> lock(updateStatusMutex);
+        currentStatus = updateStatus;
+    }
+
     // Small label in bottom-right corner
     float labelW = 80;
     float labelH = 22;
@@ -853,9 +870,9 @@ void RenderUpdateStatusLabel(float menuX, float menuY, float menuW, float menuH)
     float labelX = menuX + menuW - labelW - padding;
     float labelY = menuY + menuH - labelH - padding;
 
-    Color labelColor = (updateStatus == "UPDATED")
+    Color labelColor = (currentStatus == "UPDATED")
         ? Color(255, 70, 200, 70)   // Green for UPDATED
-        : (updateStatus == "OUTDATED"
+        : (currentStatus == "OUTDATED"
             ? Color(255, 200, 70, 70)  // Red for OUTDATED
             : Color(255, 150, 150, 150)); // Grey for CHECKING
 
@@ -866,7 +883,7 @@ void RenderUpdateStatusLabel(float menuX, float menuY, float menuW, float menuH)
     SC_GUI::DrawStrokeRoundedRect(labelX, labelY, labelW, labelH, 4.0f, labelColor, 1.0f);
 
     // Text
-    SC_GUI::DrawStringA(updateStatus, labelX + labelW/2, labelY + labelH/2, labelColor, SC_GUI::smallFont, true);
+    SC_GUI::DrawStringA(currentStatus, labelX + labelW/2, labelY + labelH/2, labelColor, SC_GUI::smallFont, true);
 }
 
 void OnFrame()
@@ -903,14 +920,6 @@ void OnFrame()
     } else {
         // Phase is PHASE_MAIN_MENU - show main menu
         overlay::Render(RenderMenu, MenuOpen);
-
-        // Render update status label (visible in all tabs)
-        RenderUpdateStatusLabel(menuX, menuY, menuW, menuH);
-
-        // Render skin change loading box on top if needed
-        if (isChangingSkin) {
-            overlay::Render(RenderSkinChangeLoadingBox, true);
-        }
     }
 }
 
