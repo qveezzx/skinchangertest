@@ -747,6 +747,37 @@ void RenderLoadingScreen()
     }
 }
 
+void RenderUpdateStatusLabel(float menuX, float menuY, float menuW, float menuH)
+{
+    std::string currentStatus;
+    {
+        std::lock_guard<std::mutex> lock(updateStatusMutex);
+        currentStatus = updateStatus;
+    }
+
+    // Small label in bottom-right corner
+    float labelW = 80;
+    float labelH = 22;
+    float padding = 10;
+    float labelX = menuX + menuW - labelW - padding;
+    float labelY = menuY + menuH - labelH - padding;
+
+    Color labelColor = (currentStatus == "UPDATED")
+        ? Color(255, 70, 200, 70)   // Green for UPDATED
+        : (currentStatus == "OUTDATED"
+            ? Color(255, 200, 70, 70)  // Red for OUTDATED
+            : Color(255, 150, 150, 150)); // Grey for CHECKING
+
+    // Background
+    SC_GUI::DrawFilledRoundedRect(labelX, labelY, labelW, labelH, 4.0f, Color(180, 20, 20, 20));
+
+    // Border
+    SC_GUI::DrawStrokeRoundedRect(labelX, labelY, labelW, labelH, 4.0f, labelColor, 1.0f);
+
+    // Text
+    SC_GUI::DrawStringA(currentStatus, labelX + labelW/2, labelY + labelH/2, labelColor, SC_GUI::smallFont, true);
+}
+
 void RenderMenu()
 {
     float w = 1000;
@@ -853,37 +884,6 @@ void RenderMenu()
     if (isChangingSkin) {
         RenderSkinChangeLoadingBox();
     }
-}
-
-void RenderUpdateStatusLabel(float menuX, float menuY, float menuW, float menuH)
-{
-    std::string currentStatus;
-    {
-        std::lock_guard<std::mutex> lock(updateStatusMutex);
-        currentStatus = updateStatus;
-    }
-
-    // Small label in bottom-right corner
-    float labelW = 80;
-    float labelH = 22;
-    float padding = 10;
-    float labelX = menuX + menuW - labelW - padding;
-    float labelY = menuY + menuH - labelH - padding;
-
-    Color labelColor = (currentStatus == "UPDATED")
-        ? Color(255, 70, 200, 70)   // Green for UPDATED
-        : (currentStatus == "OUTDATED"
-            ? Color(255, 200, 70, 70)  // Red for OUTDATED
-            : Color(255, 150, 150, 150)); // Grey for CHECKING
-
-    // Background
-    SC_GUI::DrawFilledRoundedRect(labelX, labelY, labelW, labelH, 4.0f, Color(180, 20, 20, 20));
-
-    // Border
-    SC_GUI::DrawStrokeRoundedRect(labelX, labelY, labelW, labelH, 4.0f, labelColor, 1.0f);
-
-    // Text
-    SC_GUI::DrawStringA(currentStatus, labelX + labelW/2, labelY + labelH/2, labelColor, SC_GUI::smallFont, true);
 }
 
 void OnFrame()
