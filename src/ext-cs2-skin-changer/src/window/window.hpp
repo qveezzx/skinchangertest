@@ -36,6 +36,7 @@ namespace overlay {
             WS_POPUP, 0, 0, G_Width, G_Height,
             nullptr, nullptr, wcex.hInstance, nullptr
         );
+        SC_GUI::g_OverlayHwnd = Window;
 
         // NOTE: Do NOT call SetLayeredWindowAttributes if we plan to use UpdateLayeredWindow!
         // SetLayeredWindowAttributes(Window, 0, 255, LWA_ALPHA); 

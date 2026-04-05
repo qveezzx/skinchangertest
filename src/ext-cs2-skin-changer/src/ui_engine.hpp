@@ -17,6 +17,7 @@
 using namespace Gdiplus;
 
 namespace SC_GUI {
+    inline HWND g_OverlayHwnd = nullptr;
     // Animation State
     struct AnimState {
         float value = 0.0f;
@@ -28,6 +29,7 @@ namespace SC_GUI {
     };
 
     inline std::map<std::string, AnimState> animations;
+
 
     // Resource-based icon loading (no cache - loads fresh each time, icons are small)
     inline Image* GetIconFromResource(const std::string& iconName) {
@@ -115,8 +117,8 @@ namespace SC_GUI {
 
     void Update() {
     GetCursorPos(&mousePos);
-    HWND hwnd = overlay::GetWindow();
-    if (hwnd) ScreenToClient(hwnd, &mousePos);
+    if (SC_GUI::g_OverlayHwnd)
+        ScreenToClient(SC_GUI::g_OverlayHwnd, &mousePos);
 
     if (firstUpdate) {
         prevMousePos = mousePos;
