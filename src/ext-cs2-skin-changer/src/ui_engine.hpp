@@ -29,16 +29,8 @@ namespace SC_GUI {
 
     inline std::map<std::string, AnimState> animations;
 
-    // Resource-based icon cache
-    inline std::map<std::string, Image*> iconCache;
-
+    // Resource-based icon loading (no cache - loads fresh each time, icons are small)
     inline Image* GetIconFromResource(const std::string& iconName) {
-        // Check cache first
-        auto it = iconCache.find(iconName);
-        if (it != iconCache.end()) {
-            return it->second;
-        }
-
         // Map icon names to resource IDs
         int resourceId = 0;
         if (iconName == "weapons") resourceId = 101;
@@ -50,7 +42,7 @@ namespace SC_GUI {
         if (resourceId == 0) return nullptr;
 
         // Load resource from executable
-        HRSRC hResource = FindResource(NULL, MAKEINTRESOURCE(resourceId), RT_RCDATA);
+        HRSRC hResource = FindResourceW(NULL, MAKEINTRESOURCEW(resourceId), RT_RCDATA);
         if (!hResource) return nullptr;
 
         HGLOBAL hLoadedResource = LoadResource(NULL, hResource);
@@ -59,23 +51,27 @@ namespace SC_GUI {
         LPVOID pResourceData = LockResource(hLoadedResource);
         DWORD resourceSize = SizeofResource(NULL, hResource);
 
+        if (!pResourceData || resourceSize == 0) return nullptr;
+
         // Create stream from resource
         IStream* pStream = NULL;
-        if (CreateStreamOnHGlobal(NULL, TRUE, &pStream) != S_OK) return nullptr;
+        HRESULT hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+        if (FAILED(hr) || !pStream) return nullptr;
 
         pStream->Write(pResourceData, resourceSize, NULL);
-        pStream->Seek({0}, STREAM_SEEK_SET, NULL);
+        LARGE_INTEGER seekPos;
+        seekPos.QuadPart = 0;
+        pStream->Seek(seekPos, STREAM_SEEK_SET, NULL);
 
         // Create image from stream
         Image* pImg = Image::FromStream(pStream);
         pStream->Release();
 
         if (pImg && pImg->GetLastStatus() == Ok) {
-            iconCache[iconName] = pImg;
             return pImg;
         }
 
-        delete pImg;
+        if (pImg) delete pImg;
         return nullptr;
     }
     
@@ -117,25 +113,24 @@ namespace SC_GUI {
         char lastChar = 0;
         std::string activeID = "";
 
-        void Update() {
-            if (firstUpdate) {
-                GetCursorPos(&mousePos);
-                prevMousePos = mousePos;
-                firstUpdate = false;
-            }
+    void Update() {
+    GetCursorPos(&mousePos);
+    HWND hwnd = overlay::GetWindow();
+    if (hwnd) ScreenToClient(hwnd, &mousePos);
 
-            prevMousePos = mousePos;
-            GetCursorPos(&mousePos);
-            ScreenToClient(GetForegroundWindow(), &mousePos); // Map to client area roughly
+    if (firstUpdate) {
+        prevMousePos = mousePos;
+        firstUpdate = false;
+    }
 
-            mouseDelta.x = mousePos.x - prevMousePos.x;
-            mouseDelta.y = mousePos.y - prevMousePos.y;
+    mouseDelta.x = mousePos.x - prevMousePos.x;
+    mouseDelta.y = mousePos.y - prevMousePos.y;
+    prevMousePos = mousePos;
 
-            prevLeftClick = leftClick;
-            leftClick = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
-            leftClicked = leftClick && !prevLeftClick;
-        }
-    } Input;
+    prevLeftClick = leftClick;
+    leftClick = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+    leftClicked = leftClick && !prevLeftClick;
+    }
 
     // GDI+ Globals
     inline ULONG_PTR gdiplusToken;
@@ -459,7 +454,7 @@ namespace SC_GUI {
                             IStream* pStream = NULL;
                             if (CreateStreamOnHGlobal(NULL, TRUE, &pStream) == S_OK) {
                                 pStream->Write(chunk.memory, (ULONG)chunk.size, NULL);
-                                pStream->Seek({0}, STREAM_SEEK_SET, NULL);
+                                LARGE_INTEGER seekPos = {}; pStream->Seek(seekPos, STREAM_SEEK_SET, NULL);
                                 Image* pImg = Image::FromStream(pStream);
                                 if (pImg && pImg->GetLastStatus() == Ok) {
                                     // Create Scaled Thumbnail
@@ -605,7 +600,13 @@ namespace SC_GUI {
             float iconX = x + (w - iconSize) * 0.5f;
             float iconY = y + (h - iconSize) * 0.5f;
 
-            Image* iconImg = GetIconFromResource(icon);
+            static std::map<std::string, Image*> iconCache;
+    
+            if (iconCache.find(icon) == iconCache.end()) {
+            iconCache[icon] = GetIconFromResource(icon);
+            }
+    
+            Image* iconImg = iconCache[icon];
 
             if (iconImg) {
                 gfx->DrawImage(iconImg, (REAL)iconX, (REAL)iconY, (REAL)iconSize, (REAL)iconSize);

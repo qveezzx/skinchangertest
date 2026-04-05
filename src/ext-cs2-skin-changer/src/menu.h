@@ -489,7 +489,6 @@ void RenderSettingsTab(float x, float y, float w, float h)
     curY += 40;
 
     RenderConfigTab(x, curY, w, h - (curY - y));
-    RenderConfigTab(x, curY, w, h - (curY - y));
 }
 
 // --- Glove Tab ---
