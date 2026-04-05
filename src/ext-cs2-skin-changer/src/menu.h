@@ -13,12 +13,6 @@ static std::string updateStatus = "CHECKING"; // CHECKING, UPDATED, OUTDATED
 static ULONGLONG lastUpdateCheck = 0;
 static const ULONGLONG UPDATE_CHECK_INTERVAL = 60000; // Check every 60 seconds
 
-static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
-    size_t realsize = size * nmemb;
-    ((std::string*)userp)->append((char*)contents, realsize);
-    return realsize;
-}
-
 void CheckForUpdates() {
     ULONGLONG now = GetTickCount64();
     if (now - lastUpdateCheck < UPDATE_CHECK_INTERVAL) return;
@@ -35,7 +29,11 @@ void CheckForUpdates() {
 
         curl_easy_setopt(curl, CURLOPT_URL, "https://raw.githubusercontent.com/qveezzx/skinchangertest/refs/heads/main/isupdated");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, +[](void* contents, size_t size, size_t nmemb, void* userp) -> size_t {
+            size_t realsize = size * nmemb;
+            ((std::string*)userp)->append((char*)contents, realsize);
+            return realsize;
+        });
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
