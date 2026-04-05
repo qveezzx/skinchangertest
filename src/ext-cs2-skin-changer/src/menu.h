@@ -340,7 +340,7 @@ void RenderMusicTab(float x, float y, float w, float h)
 
     // Scroll Logic
     static float mScrollY = 0.0f;
-    float itemW = 140; float itemH = 100; float pad = 15;
+    float itemW = 120; float itemH = 100; float pad = 12;
     int cols = (int)((w - 40) / (itemW + pad));
     if (cols < 1) cols = 1;
 
@@ -859,11 +859,11 @@ void RenderMenu()
     if (SC_GUI::TabButton("tab_settings", "", startX + (buttonSize + buttonGap) * 4, navY, buttonSize, buttonSize, active_tab == 3, "settings")) active_tab = 3;
 
     // Single separator line under header
-    SC_GUI::DrawRect(x + 10, y + 155, w - 20, 1, Color(255, 70, 70, 70));
+    SC_GUI::DrawRect(x + 10, y + 180, w - 20, 1, Color(255, 70, 70, 70));
 
     // Content Area
     float cX = x + 20;
-    float cY = y + 10 + headerH + 20;
+    float cY = y + 10 + headerH + 30;
     float cW = w - 40;
     float cH = h - (cY - y) - 20;
 
